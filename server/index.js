@@ -1,8 +1,18 @@
 ;const express = require("express");
+const cors = require("cors");
 const sqlite3 = require('sqlite3').verbose();
 const port = 8800;
 
-const app = express()
+const app = express();
+
+app.use(express.json());
+
+// cors enables communication from front end to back end
+app.use(cors({
+    origin: 'http://localhost:3000',
+    methods: ['GET', 'POST'],
+    credentials: true,
+  }));
 
 const db = new sqlite3.Database('./databases/test.db', sqlite3.OPEN_READWRITE, (err) => {
     if (err) return console.error(err.message);
@@ -54,6 +64,20 @@ app.post('/api/users', (req, res) => {
             return;
         }
         res.json({ id: this.lastID });
+    });
+});
+
+// TESTING - adds a new user to the database from client side page /users/new
+app.post('/api/users/new', (req, res) => {
+    console.log(req.body);
+    const { first_name, last_name, username, password, email } = req.body;
+    const sqlInsert = `INSERT INTO users (first_name, last_name, username, password, email) VALUES (?, ?, ?, ?, ?)`;
+    db.run(sqlInsert, [first_name, last_name, username, password, email], function(err) {
+        if (err) {
+            res.status(500).json({ error: err.message });
+            return;
+        }
+        res.json({ id: this.lastID }); 
     });
 });
 
