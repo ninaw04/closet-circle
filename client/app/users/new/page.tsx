@@ -13,6 +13,10 @@ function NewUsersPage() {
   const router = useRouter(); // for page redirect
   const { user, error, isLoading } = useUser(); // get this user
 
+  if (!user) {
+    return; // ensure user is logged in
+  }
+
   // Submitting the form saves the information to the database through POST
   const handleSubmit = async (e: { preventDefault: () => void; }) => {
     e.preventDefault();

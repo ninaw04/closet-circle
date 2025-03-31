@@ -2,9 +2,17 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { useUser } from '@auth0/nextjs-auth0/client';
+import { useEffect } from 'react';
 
 export default function Home() {
   const { user, isLoading } = useUser();
+
+  // Remove sessionStorage item when there is no user logged in
+  if (!user) {
+    useEffect(() => {
+      sessionStorage.removeItem("newuser_complete");
+    });
+  }
 
   // links to redirect to auth0 login and logout
   return (

@@ -9,20 +9,24 @@ import { withPageAuthRequired } from '@auth0/nextjs-auth0/client';
 import Link from 'next/link';
 
 const ProfilePage = () => {
-  const { user, error, isLoading} = useUser();
+  const { user, error, isLoading } = useUser();
+  if (!user) {
+    return; // ensure user is logged in
+  }
+
   const router = useRouter();
   // Check if new user has completed account creation
   const newUserCompleted = sessionStorage.getItem("newuser_complete");
 
   // Redirect to continue account creation page (where new users are saved to db after completion)
   useEffect(() => {
-      if (!isLoading && user) {
-          // I added code in auth0 that stores first_login claim (O.C.)
-          const firstLogin = user['http://localhost:3000/first_login'];
-          if (firstLogin && !newUserCompleted) {
-              router.push('/users/new'); 
-          }
+    if (!isLoading && user) {
+      // I added code in auth0 that stores first_login claim (O.C.)
+      const firstLogin = user['http://localhost:3000/first_login'];
+      if (firstLogin && !newUserCompleted) {
+        router.push('/users/new');
       }
+    }
   }, [user, isLoading, router]);
 
   if (isLoading) return (
@@ -41,6 +45,7 @@ const ProfilePage = () => {
       <a href="/api/auth/logout">Logout</a>
     </main>
   )
+
 }
 
 // This page requires users to be logged in, otherwise this prompts users to log in
