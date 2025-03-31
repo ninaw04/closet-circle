@@ -81,6 +81,23 @@ app.post('/api/users/new', (req, res) => {
     });
 });
 
+// TESTING - to get a specific user
+app.get('/api/profile', (req, res) => {
+    //console.log(req.body);
+    const {email} = req.query;
+    console.log("email query " + email);
+    const sqlSelect =  `SELECT * FROM users WHERE email = ?`;
+    db.all(sqlSelect, email, function(err, rows) {
+        if (err) {
+            res.status(500).json({ error: err.message });
+            return;
+        }
+        console.log("running query");
+        console.log("rows: " + rows);
+        res.json({ users: rows }); 
+    });
+});
+
 
 app.listen(port, () => {
     console.log(`Server is running on http://localhost:${port}`);
