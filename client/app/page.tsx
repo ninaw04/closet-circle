@@ -14,7 +14,7 @@ export default function Home() {
       <br></br>
       <Link href="/profile">Your Profile</Link>
       <br></br>
-      {!user && (<a href="/api/auth/login">Login</a>)}
+      {!user && (<a href="/api/auth/login?returnTo=/profile">Login</a>)}
       <br></br>
       {user && (<a href="/api/auth/logout">Logout</a>)}
     </main>
