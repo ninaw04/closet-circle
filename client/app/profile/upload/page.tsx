@@ -30,6 +30,10 @@ const item_categories = [
   { label: "Shoes", checked: false },
   { label: "Hats", checked: false },
   { label: "Jackets", checked: false },
+  { label: "Winter", checked: false },
+  { label: "Fall", checked: false },
+  { label: "Spring", checked: false },
+  { label: "Summer", checked: false },
 ];
 
 // Item conditions
