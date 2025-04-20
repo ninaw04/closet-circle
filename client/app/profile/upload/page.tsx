@@ -5,35 +5,55 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 
-const Checkbox = ({ isChecked, label, checkHandler, index }: { isChecked: any, label: String, checkHandler: any, index: any}) => {
+// Checkbox component for form
+const Checkbox = ({ isChecked, label, checkHandler, index }: { isChecked: any, label: String, checkHandler: any, index: any }) => {
   return (
-      <div>
-        <input
-          type="checkbox"
-          id={`checkbox=${index}`}
-          value={isChecked}
-          onChange={checkHandler}
-          />
-          <label htmlFor="checkbox">{label}</label>
-      </div>
+    <div>
+      <input
+        type="checkbox"
+        id={`checkbox=${index}`}
+        value={isChecked}
+        onChange={checkHandler}
+      />
+      <label htmlFor="checkbox">{label}</label>
+    </div>
   );
 };
 
-  // Item categories
-  const item_categories = [
-    { label: "Women's", checked: false},
-    { label: "Men's", checked: false},
-    { label: "Shirts", checked: false},
-    { label: "Pants", checked: false},
-    { label: "Dresses", checked: false},
-    { label: "Shoes", checked: false},
-    { label: "Hats", checked: false},
-    { label: "Jackets", checked: false},
-  ];
+// Item categories
+const item_categories = [
+  { label: "Women's", checked: false },
+  { label: "Men's", checked: false },
+  { label: "Shirts", checked: false },
+  { label: "Pants", checked: false },
+  { label: "Dresses", checked: false },
+  { label: "Shoes", checked: false },
+  { label: "Hats", checked: false },
+  { label: "Jackets", checked: false },
+];
 
-// This page is for uploading a post
+// Item conditions
+const new_condition = {
+  field: "new", // 'field' is what gets saved to the database in the item_condition field
+  desc: "New - Never worn",
+}
+const used_excellent = {
+  field: "excellent",
+  desc: "Used - Excellent",
+}
+const used_good = {
+  field: "good",
+  desc: "Used - Good",
+}
+const used_fair = {
+  field: "fair",
+  desc: "Used - Fair",
+}
+
+// This page is for user input for creating a post for a clothing item
 // Saves post information to database
 function UploadPost() {
+  // db info needed to store
   const [closet_id, setClosetID] = useState('');
   const [category_id, setCategoryID] = useState('');
   const [title, setTitle] = useState('');
@@ -49,31 +69,12 @@ function UploadPost() {
   const router = useRouter(); // for page redirect
   const { user, error, isLoading } = useUser(); // get this user
 
-  // Item conditions
-  const new_condition = {
-    field: "new", // 'field' is what gets saved to the database in the item_condition field
-    desc: "New - Never worn",
-  }
-  const used_excellent = {
-    field: "excellent",
-    desc: "Used - Excellent",
-  }
-  const used_good = {
-    field: "good",
-    desc: "Used - Good",
-  }
-  const used_fair = {
-    field: "fair",
-    desc: "Used - Fair",
-  }
-
-
-
+  // Ensure user is logged in
   if (!user) {
-    return; // ensure user is logged in
+    return; 
   }
 
-  
+  // Format date yyyy-mm-dd
   function getFormattedDate() {
     const date = new Date();
     const month = date.getMonth() + 1;
@@ -85,14 +86,14 @@ function UploadPost() {
   }
 
   // Handler for checkbox
-  const onHandleChange = (index: any) => {
-    console.log({index});
+  const onHandleChangeCheckbox = (index: any) => {
+    console.log({ index });
     setCategoryCheckbox(
       categoriesBox.map((cat, currentIx) => {
-      return currentIx === index
-      ? {...cat, checked: !cat.checked}
-      : cat;
-    }));
+        return currentIx === index
+          ? { ...cat, checked: !cat.checked }
+          : cat;
+      }));
 
   };
 
@@ -100,10 +101,10 @@ function UploadPost() {
   const handleSubmit = async (e: { preventDefault: () => void; }) => {
     e.preventDefault();
 
-    // post information to be stored
-    const postInfo = { closet_id: 0, owner_id: user.email, category_id, title, likes: 0, item_picture, description, date_posted, item_condition};
+    // Information to be stored
+    const postInfo = { closet_id: 0, owner_id: user.email, category_id, title, likes: 0, item_picture, description, date_posted, item_condition };
 
-    // send data through POST
+    // Send data through POST
     const response = await fetch('http://localhost:8800/api/profile/upload-post', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -112,7 +113,7 @@ function UploadPost() {
 
     const result = await response.json();
 
-    // redirect to profile page when user submits form
+    // Redirect to profile page when user submits form
     if (response.ok) {
       console.log('Post saved:', result);
       router.push("/profile");
@@ -136,6 +137,17 @@ function UploadPost() {
 
         <input
           type="text"
+          placeholder="Link to item picture"
+          value={item_picture}
+          onChange={(e) => setPicturePath(e.target.value)}
+        />
+
+        <img src={item_picture != '' ? item_picture : undefined} />
+
+        <br></br>
+
+        <input
+          type="text"
           placeholder="Description"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
@@ -143,12 +155,12 @@ function UploadPost() {
 
         <br></br>
 
-        <select id="myDropdown" value={item_condition} onChange={(e) => setCondition(e.target.value)}>
-            <option value="">Select Item Condition</option>
-            <option value={new_condition.field}>{new_condition.desc}</option>
-            <option value={used_excellent.field}>{used_excellent.desc}</option>
-            <option value={used_good.field}>{used_good.desc}</option>
-            <option value={used_fair.field}>{used_fair.desc}</option>
+        <select id="conditionDropdown" value={item_condition} onChange={(e) => setCondition(e.target.value)}>
+          <option value="">Select Item Condition</option>
+          <option value={new_condition.field}>{new_condition.desc}</option>
+          <option value={used_excellent.field}>{used_excellent.desc}</option>
+          <option value={used_good.field}>{used_good.desc}</option>
+          <option value={used_fair.field}>{used_fair.desc}</option>
         </select>
         {/* <p>You selected: {item_condition}</p> */}
 
@@ -156,17 +168,16 @@ function UploadPost() {
 
         <div>
           {categoriesBox.map((cat, index) => {
-            console.log({index});
+            console.log({ index });
             return <Checkbox
               isChecked={cat.checked}
               label={cat.label}
-              checkHandler={() => onHandleChange(index)}
+              checkHandler={() => onHandleChangeCheckbox(index)}
               index={index}
             />
           })}
-
-        
         </div>
+
         <br></br>
 
         <button type="submit">Upload Post</button>
