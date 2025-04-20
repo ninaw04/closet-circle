@@ -167,6 +167,7 @@ function UploadPost() {
         <br></br>
 
         <div>
+          <p>Select Item Categories:</p>
           {categoriesBox.map((cat, index) => {
             console.log({ index });
             return <Checkbox
