@@ -74,6 +74,7 @@ app.post('/api/users', (req, res) => {
 
 
 // Route to add a user into table User of closet_circle_database
+// note: used in client/app/users/new/page.tsx
 app.post('/api/users/new', (req, res) => {
     console.log(req.body);
     const { email, first_name, last_name, bio } = req.body;
@@ -88,6 +89,7 @@ app.post('/api/users/new', (req, res) => {
 });
 
 // Route to get a specific user based on email
+// note: used in client/app/profile/page.tsx to display first & last name, bio
 app.get('/api/profile', (req, res) => {
     //console.log(req.body);
     const {email} = req.query;
