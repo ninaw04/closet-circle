@@ -10,6 +10,7 @@ import { useEffect } from 'react';
 function NewUsersPage() {
   const [first_name, setFirstName] = useState('');
   const [last_name, setLastName] = useState('');
+  const [bio, setBio] = useState('');
   const router = useRouter(); // for page redirect
   const { user, error, isLoading } = useUser(); // get this user
 
@@ -22,7 +23,7 @@ function NewUsersPage() {
     e.preventDefault();
 
     // get data from this logged in user
-    const newUserData = { first_name, last_name, username: "u", email: user.email, password: "p" };
+    const newUserData = { email: user.email, first_name, last_name, bio};
 
     // send data through POST
     const response = await fetch('http://localhost:8800/api/users/new', {
@@ -59,6 +60,13 @@ function NewUsersPage() {
           placeholder="Last name"
           value={last_name}
           onChange={(e) => setLastName(e.target.value)}
+        />
+
+        <input
+          type="text"
+          placeholder="Bio"
+          value={bio}
+          onChange={(e) => setBio(e.target.value)}
         />
 
         <br></br>
