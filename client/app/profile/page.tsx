@@ -89,7 +89,7 @@ const Header = () => {
 /* ============================================
    SIDEBAR ITEM COMPONENT
 ============================================ */
-const SidebarItem = ({ label, active = false, onClick, icon = null }) => (
+const SidebarItem = ({ label, active = false, onClick, icon = null }: {label: any, active: boolean, onClick: any, icon: any}) => (
     <div
         className={`flex items-center p-4 cursor-pointer ${active ? 'font-semibold' : 'font-normal'} text-black text-lg`}
         onClick={onClick}
@@ -107,7 +107,7 @@ const SidebarItem = ({ label, active = false, onClick, icon = null }) => (
 /* ============================================
    CLOSET ITEM COMPONENT
 ============================================ */
-const ClosetItem = ({ image, title, buyPrice, rentOption = true, sold = false }) => {
+const ClosetItem = ({ image, title, buyPrice, rentOption = true, sold = false }: {image: any, title: any, buyPrice: any, rentOption: any, sold: any}) => {
     const [isFavorite, setIsFavorite] = useState(false);
 
     return (
@@ -174,7 +174,7 @@ const ClosetItem = ({ image, title, buyPrice, rentOption = true, sold = false })
 /* ============================================
    TAB BUTTON COMPONENT
 ============================================ */
-const TabButton = ({ label, active, onClick }) => (
+const TabButton = ({ label, active, onClick }: {label: any, active: any, onClick: any}) => (
     <button
         className={`py-2 px-4 text-sm font-medium rounded-md ${active ? 'text-white' : 'text-gray-800 bg-gray-100'}`}
         style={{ backgroundColor: active ? brandNavy : undefined }}
@@ -261,30 +261,24 @@ const Footer = () => (
 
 /* ============================================
    PROFILE PAGE COMPONENT
-   (Annotated to correspond with previous teammate's comments)
 ============================================ */
 const ProfilePage = () => {
     const { user, error, isLoading } = useUser();
     const router = useRouter();
 
-    // ensure user is logged in
-    // (If the user is not logged in, they will be redirected to the login page)
-    useEffect(() => {
-        if (!isLoading && !user) {
-            router.push('/api/auth/login?returnTo=/profile');
-        }
-    }, [user, isLoading, router]);
+    // Ensure user is logged in - O.C.
+    if (!user) {
+        return; // ensure user is logged in
+    }
 
-    // Check if new user has completed account creation
-    // (Previously, a sessionStorage value "newuser_complete" was used to check this.)
-    // Redirect to continue account creation page (where new users are saved to db after completion)
-    // (NOTE: The logic for handling new user redirection is not present in this code but can be added if needed.)
+    // Check if new user has completed account creation - O.C.
+    const newUserCompleted = sessionStorage.getItem("newuser_complete");
 
-    // User information
+    // User information - O.C.
     const [firstName, setFirstName] = useState('');
     const [lastName, setLastName] = useState('');
-    const [username, setUsername] = useState('');
     const [email, setEmail] = useState('');
+
     // State for active tab in sidebar and closet
     const [activeTab, setActiveTab] = useState('Profile');
     const [activeClosetTab, setActiveClosetTab] = useState('My Closet');
@@ -315,29 +309,31 @@ const ProfilePage = () => {
 
     useEffect(() => {
         if (!isLoading && user) {
-            // Set email from Auth0 user object
-            setEmail(user.email || '');
+            setEmail(user.email || ''); // email from Auth0
+            console.log("here: email - " + user.email);
 
-            // Get specific user information from db
-            // (1 user should be returned – one account per email)
+            // Get specific user information from db - O.C.
             fetch(`http://localhost:8800/api/profile?email=${user.email}`)
                 .then(response => response.json())
                 .then(data => {
-                    console.log("User data:", data);
-                    if (data.users && data.users.length > 0) {
-                        setFirstName(data.users[0].first_name || '');
-                        setLastName(data.users[0].last_name || '');
-                        setUsername(data.users[0].username || user.email.split('@')[0] || '');
+
+                    // I added code in auth0 that stores first_login claim - O.C.
+                    const firstLogin = user['http://localhost:3000/first_login'];
+                    // Redirect to continue account creation page (where new users are saved to db after completion) - O.C.
+                    if (data.users.length <= 0 && (firstLogin && !newUserCompleted)) {
+                        router.push('/users/new');
+
+                    } else { // otherwise stay on profile page with subsequent logins
+                        console.log("returned: " + data.users[0]); // 1 user should be returned (1 account per email)
+                        setFirstName(data.users[0].first_name);
+                        setLastName(data.users[0].last_name);
                     }
                 })
-                .catch(error => {
-                    console.error('Error fetching profile:', error);
-                    setUsername(user.email ? user.email.split('@')[0] : 'user');
-                });
+                .catch(error => console.error('Error:', error));
         }
     }, [user, isLoading, router]);
 
-    const handleUnimplementedClick = (feature) => {};
+    const handleUnimplementedClick = (feature: any) => { };
 
     if (isLoading) {
         return (

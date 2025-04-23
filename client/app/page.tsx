@@ -26,27 +26,27 @@ const Header: React.FC = () => {
         <div className="flex gap-5 items-center">
           {!user ? (
               <div className="flex gap-2.5">
-                <Link
+                <a
                     href="/api/auth/login?returnTo=/profile"
                     style={{ backgroundColor: brandLightPink, color: brandNavy}}  className="px-7 py-3 text-xl font-semibold tracking-wide text-center"
                 >
                   Log In
-                </Link>
-                <Link
+                </a>
+                <a
                     href="/api/auth/login?returnTo=/profile"
                     style={{ backgroundColor: brandLightPink, color: brandBrown }}  className="px-7 py-3 text-xl font-semibold tracking-wide text-center"
                 >
                   Sign Up
-                </Link>
+                </a>
               </div>
           ) : (
               <div className="flex gap-2.5">
                 <Link href="/profile" className="px-5 py-2 text-white font-semibold hover:underline">
                   Profile
                 </Link>
-                <Link href="/api/auth/logout" className="px-5 py-2 text-white font-semibold hover:underline">
+                <a href="/api/auth/logout" className="px-5 py-2 text-white font-semibold hover:underline">
                   Logout
-                </Link>
+                </a>
               </div>
           )}
         </div>
@@ -354,6 +354,7 @@ const Footer: React.FC = () => (
 export default function Home() {
   const { user } = useUser();
 
+  // Remove sessionStorage item when there is no user logged in - O.C.
   useEffect(() => {
     if (!user) {
       sessionStorage.removeItem('newuser_complete');
