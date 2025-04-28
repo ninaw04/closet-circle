@@ -1,0 +1,571 @@
+'use client';
+
+import React, { useState, useMemo, useRef, useEffect } from 'react';
+import Link from 'next/link';
+import { useUser } from '@auth0/nextjs-auth0/client';
+
+/* ============================================
+   BRAND COLORS
+============================================ */
+const brandNavy = '#284472';
+const brandLightPink = "#fdf5f3";
+const brandPink = "#FDEEEA";
+const brandLightBrown = "#efe4e1";
+const brandBrown = "#675a5e";
+
+
+/* -------------------------------------------
+   TYPES
+------------------------------------------- */
+interface Lister {
+    display   : string;   // “Nancy L.”
+    username  : string;   // “nancy-l”   (used in /profile/{username})
+    avatarUrl : string;
+}
+
+interface Product {
+    id        : number;
+    title     : string;
+    price     : number;
+    forSale   : boolean;
+    forRent   : boolean;
+    type      : 'Tops'|'Bottoms'|'Outerwear'|'Dresses'|'Shoes'|'Accessories';
+    audience  : 'Mens'|'Womens'|'Kids';
+    colors    : string[];
+    sizes     : string[];
+    condition : string;
+    description?: string;
+    images    : string[];          // empty ⇒ gray placeholder
+    lister    : Lister;            // NEW
+}
+
+/* helper to create avatar url */
+const avatar = (name: string) =>
+    `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&size=64&background=DDDDDD&color=000`;
+
+/* -------------------------------------------
+   SAMPLE DATA
+------------------------------------------- */
+const PRODUCTS: Product[] = [
+    { id:1, title:'Loose Fit Bermuda Shorts', price:11, forSale:false, forRent:true,
+        type:'Bottoms', audience:'Mens', colors:['black'], sizes:['Small','Medium'],
+        condition:'Brand new', description:'Comfortable everyday Bermuda shorts.', images:[],
+        lister:{display:'Nancy L.', username:'nancy-l', avatarUrl:avatar('Nancy L')} },
+
+    { id:2, title:'Courage Graphic T-Shirt', price:20, forSale:true,  forRent:false,
+        type:'Tops', audience:'Mens', colors:['white'], sizes:['Large'],
+        condition:'Used – Like new', description:'Soft cotton tee with a bold print.', images:[],
+        lister:{display:'Thomas A.', username:'thomas-a', avatarUrl:avatar('Thomas A')} },
+
+    { id:3, title:'Vertical Striped Shirt', price:14, forSale:true, forRent:true,
+        type:'Tops', audience:'Mens', colors:['blue'], sizes:['Medium'],
+        condition:'Used – Good', description:'Button-down with vertical stripes.', images:[],
+        lister:{display:'Cece D.', username:'cece-d', avatarUrl:avatar('Cece D')} },
+
+    { id:4, title:'Sleeve Striped T-Shirt', price:9, forSale:false, forRent:true,
+        type:'Tops', audience:'Kids', colors:['red'], sizes:['XX-Small'],
+        condition:'Used – Fair', description:'Retro striped sleeves.', images:[],
+        lister:{display:'Ally N.', username:'ally-n', avatarUrl:avatar('Ally N')} },
+
+    { id:5, title:'Checkered Shirt', price:17, forSale:true, forRent:false,
+        type:'Tops', audience:'Mens', colors:['black','white'], sizes:['X-Large'],
+        condition:'Brand new', description:'Classic check pattern.', images:[],
+        lister:{display:'Cece D.', username:'cece-d', avatarUrl:avatar('Cece D')} },
+
+    { id:6, title:'Skinny Fit Jeans', price:24, forSale:true, forRent:true,
+        type:'Bottoms', audience:'Mens', colors:['blue'], sizes:['Medium'],
+        condition:'Used – Good', description:'Stretch denim jeans.', images:[],
+        lister:{display:'Nancy L.', username:'nancy-l', avatarUrl:avatar('Nancy L')} },
+
+    { id:7, title:'Black Striped T-Shirt', price:20, forSale:true, forRent:false,
+        type:'Tops', audience:'Kids', colors:['black'], sizes:['Small'],
+        condition:'Brand new', description:'Monochrome stripe tee.', images:[],
+        lister:{display:'Ally N.', username:'ally-n', avatarUrl:avatar('Ally N')} },
+
+    { id:8, title:'Polo with Tipping', price:12, forSale:false, forRent:true,
+        type:'Tops', audience:'Mens', colors:['green'], sizes:['Medium'],
+        condition:'Used – Like new', description:'Smart casual polo.', images:[],
+        lister:{display:'Cece D.', username:'cece-d', avatarUrl:avatar('Cece D')} },
+
+    { id:9, title:'Gradient Graphic T-Shirt', price:10, forSale:true, forRent:true,
+        type:'Tops', audience:'Womens', colors:['pink'], sizes:['Large'],
+        condition:'Brand new', description:'Eye-catching gradient design.', images:[],
+        lister:{display:'Thomas A.', username:'thomas-a', avatarUrl:avatar('Thomas A')} },
+
+    { id:10, title:'White Mini Dress', price:35, forSale:true, forRent:true,
+        type:'Dresses', audience:'Womens', colors:['white'], sizes:['Small'],
+        condition:'Brand new', description:'Elegant white mini-dress, size S.',
+        images:[
+            'https://encrypted-tbn3.gstatic.com/shopping?q=tbn:ANd9GcRG0fVSiGZw4HBqX7J0baOM1qogSWeeliHJt14VP-4t9xW9P5i6CaiYRdqZaensMNXdcrPl3kQdANfNQUEo7CMJbYOFUnYUTeR2-_A4-0eE_vy-3LcAf9aplg',
+            'https://encrypted-tbn1.gstatic.com/shopping?q=tbn:ANd9GcRX1cmSzFeL_MKu1PAsa9sSKQ7I3uHU7kKss01bEG88ACaj_8k0aO4opTRdu7l8WVS-BCW2jzyGTpjOB9PrzIkRXzFJC-8Q3yboxOGE_OLs6stOZeNSpbDPew'
+        ],
+        lister:{display:'Cece D.', username:'cece-d', avatarUrl:avatar('Cece D')} }
+];
+
+/* ============================================
+   HEADER
+============================================ */
+const Header: React.FC = () => {
+    const { user }                = useUser();
+    const [menuOpen, setMenuOpen] = useState(false);
+    const dropRef                 = useRef<HTMLDivElement|null>(null);
+
+    /* click-away for profile drop-down */
+    useEffect(() => {
+        const cb = (e: MouseEvent) => {
+            if (dropRef.current && !dropRef.current.contains(e.target as Node)) setMenuOpen(false);
+        };
+        if (menuOpen) document.addEventListener('mousedown', cb);
+        return () => document.removeEventListener('mousedown', cb);
+    }, [menuOpen]);
+
+    return (
+        <header className="flex justify-between items-center p-4 border-b shadow-md bg-white relative z-30">
+            {/* left nav */}
+            <nav className="flex gap-5 items-center ml-4">
+                <Link href="/about"   className="text-xl font-medium tracking-wide text-gray-700">About</Link>
+                <Link href="/explore" className="text-xl font-medium tracking-wide text-gray-700">Explore</Link>
+            </nav>
+
+            {/* centre logo */}
+            <div className="flex-grow flex justify-center">
+                <Link href="/">
+                    <img src="https://cdn.builder.io/api/v1/image/assets/TEMP/cbcbc59fadb92cbfa94f7a46414d883263e97dc4"
+                         alt="Logo" className="w-[200px] h-auto"/>
+                </Link>
+            </div>
+
+            {/* right-side buttons */}
+            <div className="flex gap-4 items-center mr-4">
+                {/* favourites stays visible for everyone */}
+                <Link href="/favorites">
+                    <button className="p-2" style={{ color: brandNavy }} aria-label="Favourites">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                             strokeWidth="1.5" stroke="currentColor" className="w-6 h-6">
+                            <path strokeLinecap="round" strokeLinejoin="round"
+                                  d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z"/>
+                        </svg>
+                    </button>
+                </Link>
+
+                {/* ——— conditional area ——— */}
+                {!user ? (
+                    /* ------------- logged-OUT ------------- */
+                    <div className="flex gap-2.5">
+                        <a href="/api/auth/login"
+                           style={{ backgroundColor: brandLightPink, color: brandNavy }}
+                           className="px-4 py-2 text-sm font-semibold rounded">
+                            Log In
+                        </a>
+                        <a href="/api/auth/login?screen_hint=signup"
+                           style={{ backgroundColor: brandLightPink, color: brandBrown }}
+                           className="px-4 py-2 text-sm font-semibold rounded">
+                            Sign Up
+                        </a>
+                    </div>
+                ) : (
+                    /* ------------- logged-IN -------------- */
+                    <div className="relative" ref={dropRef}>
+                        <button onClick={()=>setMenuOpen(!menuOpen)}
+                                className="p-2 flex items-center gap-1" style={{ color: brandNavy }}>
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                 strokeWidth="1.5" stroke="currentColor" className="w-6 h-6">
+                                <path strokeLinecap="round" strokeLinejoin="round"
+                                      d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z"/>
+                            </svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
+                                 fill="currentColor" className="w-4 h-4">
+                                <path fillRule="evenodd"
+                                      d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 011.08 1.04l-4.25 4.25a.75.75 0 01-1.08 0L5.25 8.27a.75.75 0 01-.02-1.06z"
+                                      clipRule="evenodd"/>
+                            </svg>
+                        </button>
+
+                        {menuOpen && (
+                            <div className="absolute right-0 mt-2 w-40 bg-white border rounded-md shadow-lg py-1 text-sm">
+                                <Link href="/profile"
+                                      className="block px-4 py-2 hover:bg-gray-100"
+                                      style={{ color: brandNavy }}
+                                      onClick={()=>setMenuOpen(false)}>
+                                    View Profile
+                                </Link>
+                                <a href="/api/auth/logout"
+                                   className="block px-4 py-2 hover:bg-gray-100"
+                                   style={{ color: brandNavy }}>
+                                    Logout
+                                </a>
+                            </div>
+                        )}
+                    </div>
+                )}
+            </div>
+        </header>
+    );
+};
+
+/* -------------------------------------------
+   PRODUCT CARD
+------------------------------------------- */
+const ProductCard: React.FC<{ product: Product }> = ({ product }) => {
+    const [fav, setFav]   = useState(false);
+    const [open, setOpen] = useState(false);
+    const [i,   setI]     = useState(0);
+    const ref             = useRef<HTMLDivElement|null>(null);
+
+    /* click-away */
+    useEffect(() => {
+        if (!open) return;
+        const h = (e: MouseEvent) =>
+            ref.current && !ref.current.contains(e.target as Node) && setOpen(false);
+        document.addEventListener('mousedown', h);
+        return () => document.removeEventListener('mousedown', h);
+    }, [open]);
+
+    const imgs      = product.images;
+    const imgCount  = imgs.length;
+    const nextImg   = () => setI((i+1)%imgCount);
+    const prevImg   = () => setI((i-1+imgCount)%imgCount);
+    const unavailable = !product.forSale && !product.forRent;
+
+    return (
+        <div ref={ref} className="relative bg-gray-100 rounded-lg border overflow-visible">
+            <Link href={`/profile/${product.lister.username}`}
+                  className="absolute top-2 left-2 z-[60] flex items-center gap-1
+                       bg-white/90 backdrop-blur-sm px-2 py-0.5 rounded-full">
+                <img src={product.lister.avatarUrl} alt={product.lister.display}
+                     className="w-5 h-5 rounded-full"/>
+                <span className="text-xs font-medium text-black">{product.lister.display}</span>
+            </Link>
+
+            {/* favourite heart */}
+            <button onClick={()=>setFav(!fav)}
+                    className="absolute top-2 right-2 z-[55] w-8 h-8 rounded-full bg-white
+                         flex items-center justify-center"
+                    style={{ color: brandNavy }}>
+                <svg width="18" height="18" viewBox="0 0 24 24"
+                     fill={fav ? 'currentColor' : 'none'}
+                     stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78
+                   7.78l1.06 1.06L12 21.23l7.78-7.78
+                   1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                </svg>
+            </button>
+
+            {/* image area */}
+            {imgCount ? (
+                <div className="relative">
+                    <img src={imgs[i]} alt={product.title}
+                         className="aspect-square w-full object-cover" />
+                    {imgCount > 1 && (
+                        <>
+                            <button onClick={prevImg}
+                                    className="absolute left-1 top-1/2 -translate-y-1/2
+                                 bg-black/70 text-white rounded-full p-1"
+                                    aria-label="Prev">
+                                <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fillRule="evenodd"
+                                          d="M12.293 4.293a1 1 0 010 1.414L8.414 10l3.879 4.293a1 1 0
+                           11-1.586 1.414l-4.5-5a1 1 0 010-1.414l4.5-5a1 1 0
+                           011.586 0z" clipRule="evenodd"/>
+                                </svg>
+                            </button>
+                            <button onClick={nextImg}
+                                    className="absolute right-1 top-1/2 -translate-y-1/2
+                                 bg-black/70 text-white rounded-full p-1"
+                                    aria-label="Next">
+                                <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fillRule="evenodd"
+                                          d="M7.707 4.293a1 1 0 000 1.414L11.586 10l-3.879
+                           4.293a1 1 0 001.586 1.414l4.5-5a1 1 0
+                           000-1.414l-4.5-5a1 1 0 00-1.586 0z" clipRule="evenodd"/>
+                                </svg>
+                            </button>
+                        </>
+                    )}
+                </div>
+            ) : (
+                <div className="bg-gray-200 aspect-square w-full" />
+            )}
+            {/* title + toggle */}
+            <div className="p-3">
+                <div className="flex justify-between items-start">
+                    <h3 className="text-sm font-medium text-black mb-2 pr-2 line-clamp-2">{product.title}</h3>
+                    <button onClick={()=>setOpen(!open)} className="flex items-center gap-1 text-sm text-black">
+                        <span>See more</span>
+                        <svg className={`w-5 h-5 transition-transform ${open?'rotate-180':''}`} viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 011.08 1.04l-4.25 4.25a.75.75 0 01-1.08 0L5.25 8.27a.75.75 0 01-.02-1.06z" clipRule="evenodd"/>
+                        </svg>
+                    </button>
+                </div>
+
+                {/* CTAs */}
+                <div className="flex gap-2">
+                    {unavailable
+                        ? <div className="bg-gray-300 text-center py-1 px-3 rounded-sm w-full text-sm">Unavailable</div>
+                        : <>
+                            {product.forSale &&
+                                <button style={{ backgroundColor: brandBrown }} className="text-white text-sm py-1 px-3 rounded-sm flex-1">
+                                    Buy for ${product.price}
+                                </button>}
+                            {product.forRent &&
+                                <button style={{ color: brandBrown }} className="border border-gray-400 text-sm py-1 px-3 rounded-sm flex-1">
+                                    Rent
+                                </button>}
+                        </>}
+                </div>
+            </div>
+
+            {/* dropdown */}
+            {open && (
+                <div className="absolute left-0 right-0 top-full mt-1 bg-gray-100
+                        border border-gray-300 border-t-0 rounded-b-md p-4
+                        text-sm text-black z-[100]">
+                    <p><strong>Sizes:</strong> {product.sizes.join(', ')}</p>
+                    <p><strong>Colors:</strong> {product.colors.join(', ')}</p>
+                    <p><strong>Condition:</strong> {product.condition}</p>
+                    {product.description && <p><strong>Description:</strong> {product.description}</p>}
+                </div>
+            )}
+        </div>
+    );
+};
+
+/* ============================================
+   FOOTER
+============================================ */
+const FooterColumn: React.FC<{ title: string; links: string[] }> = ({ title, links }) => (
+    <div className="flex-1">
+        <h3 className="mb-5 text-xs tracking-normal leading-4 text-white uppercase">{title}</h3>
+        <ul className="flex flex-col gap-1 text-sm leading-5 text-neutral-400">
+            {links.map((link) => (
+                <li key={link}>
+                    <a href="#" className="hover:text-white transition-colors">{link}</a>
+                </li>
+            ))}
+        </ul>
+    </div>
+);
+
+const NewsletterForm: React.FC = () => {
+    const [email, setEmail] = useState('');
+    const handleSubmit = (e: React.FormEvent) => { e.preventDefault(); setEmail(''); };
+    return (
+        <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+            <div className="flex flex-col gap-1.5">
+                <div className="flex px-3.5 py-3 border border-neutral-300">
+                    <input
+                        type="email"
+                        placeholder="Enter your email address"
+                        className="flex-1 text-sm leading-5 text-black bg-transparent"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        required
+                    />
+                </div>
+                <p className="text-sm leading-5 text-neutral-400">
+                    By signing up, you agree to our{' '}
+                    <a href="#" className="underline">Privacy Policy</a> and{' '}
+                    <a href="#" className="underline">Terms of Service</a>.
+                </p>
+            </div>
+            <button type="submit" className="px-5 py-3 text-base leading-5 bg-white w-fit"
+                    style={{ backgroundColor: brandLightPink, color: brandNavy }}>
+                Subscribe
+            </button>
+        </form>
+    );
+};
+
+const Footer: React.FC = () => (
+    <footer style={{ backgroundColor: brandNavy }}
+            className="px-0 pt-20 pb-11 border border-orange-950">
+        <div className="flex justify-between px-10 max-md:flex-col max-md:gap-10">
+            <div className="flex gap-6 max-md:flex-col">
+                <FooterColumn title="CONTACT US" links={['+1 (844) 326-6000', 'Email Us', 'Mon-Fri 9am-3pm PT']} />
+                <FooterColumn title="CUSTOMERS" links={['Start a Return', 'Return Policy', 'FAQ']} />
+                <FooterColumn title="COMPANY"   links={['About Us', 'Sustainability', 'Careers']} />
+            </div>
+            <div className="px-6 w-[491px] max-md:w-full">
+                <h3 className="mb-6 text-base leading-6 text-white">Get the latest news from us</h3>
+                <NewsletterForm />
+            </div>
+        </div>
+        <div className="px-10 mt-20 text-sm leading-5 text-neutral-600">©CEIN</div>
+    </footer>
+);
+
+/* ============================================
+   EXPLORE PAGE
+============================================ */
+const ExplorePage: React.FC = () => {
+    /* state */
+    const [selTypes,  setTypes]  = useState<string[]>([]);
+    const [selCats,   setCats]   = useState<string[]>([]);
+    const [selConds,  setConds]  = useState<string[]>([]);
+    const [selSizes,  setSizes]  = useState<string[]>([]);
+    const [selColors, setColors] = useState<string[]>([]);
+    const [selGender, setGender] = useState<string[]>([]);
+    const [price,     setPrice]  = useState<[number,number]>([0,50]);
+    const [sort,      setSort]   = useState('Most Popular');
+    const [page,      setPage]   = useState(1);
+    const perPage = 9;
+
+    /* filter options */
+    const typeOptions    = ['Tops','Bottoms','Outerwear','Dresses','Shoes','Accessories'];
+    const genderOptions  = ['Mens','Womens','Kids'];
+    const categoryOptions= ['For Rent','For Sale'];
+    const conditionOpts  = ['Brand new','Used – Like new','Used – Good','Used – Fair'];
+    const sizeOptions    = ['XX-Small','X-Small','Small','Medium','Large','X-Large','XX-Large','3X-Large','4X-Large'];
+    const colorOptions   = ['black','white','red','blue','green','pink'];
+
+    /* filter logic */
+    const filtered = useMemo(()=> PRODUCTS.filter(p=>{
+        if(selTypes.length   && !selTypes.includes(p.type)) return false;
+        if(selGender.length  && !selGender.includes(p.audience)) return false;
+
+        if(selCats.length){
+            const rentMatch = selCats.includes('For Rent') && p.forRent;
+            const saleMatch = selCats.includes('For Sale') && p.forSale;
+            if(!rentMatch && !saleMatch) return false;
+        }
+        if(selConds.length && !selConds.includes(p.condition)) return false;
+        if(selSizes.length && !p.sizes.some(s=>selSizes.includes(s))) return false;
+        if(selColors.length&& !p.colors.some(c=>selColors.includes(c))) return false;
+        if(p.price<price[0] || p.price>price[1]) return false;
+        return true;
+    }).sort((a,b)=>{
+        if(sort==='Price: Low to High') return a.price-b.price;
+        if(sort==='Price: High to Low') return b.price-a.price;
+        return b.id-a.id;
+    }),[selTypes,selGender,selCats,selConds,selSizes,selColors,price,sort]);
+
+    /* pagination */
+    const pages = Math.ceil(filtered.length/perPage);
+    const items = filtered.slice((page-1)*perPage,page*perPage);
+
+    /* toggle helper */
+    const toggle = (v:string,l:string[],s:React.Dispatch<React.SetStateAction<string[]>>)=>{s(l.includes(v)?l.filter(x=>x!==v):[...l,v]);setPage(1);};
+
+    /* render */
+    return (
+        <div className="min-h-screen flex flex-col bg-white">
+            <Header/>
+
+            <div className="container mx-auto py-6 px-4 flex-1 flex gap-6">
+                {/* SIDEBAR */}
+                <aside className="w-64 space-y-6 text-black">
+                    {/* sort */}
+                    <div>
+                        <h3 className="font-semibold mb-2">Sort by</h3>
+                        <select value={sort} onChange={e=>{setSort(e.target.value);setPage(1);}}
+                                className="w-full border p-2 text-black">
+                            <option>Most Popular</option><option>Price: Low to High</option><option>Price: High to Low</option>
+                        </select>
+                    </div>
+
+                    {/* gender */}
+                    <div>
+                        <h3 className="font-semibold mb-2">Audience</h3>
+                        {genderOptions.map(g=>(
+                            <label key={g} className="flex items-center mb-1">
+                                <input type="checkbox" className="mr-2" checked={selGender.includes(g)}
+                                       onChange={()=>toggle(g,selGender,setGender)}/> {g}
+                            </label>
+                        ))}
+                    </div>
+
+                    {/* type */}
+                    <div>
+                        <h3 className="font-semibold mb-2">Type</h3>
+                        {typeOptions.map(t=>(
+                            <label key={t} className="flex items-center mb-1">
+                                <input type="checkbox" className="mr-2" checked={selTypes.includes(t)}
+                                       onChange={()=>toggle(t,selTypes,setTypes)}/> {t}
+                            </label>
+                        ))}
+                    </div>
+
+                    {/* category */}
+                    <div>
+                        <h3 className="font-semibold mb-2">Category</h3>
+                        {categoryOptions.map(c=>(
+                            <label key={c} className="flex items-center mb-1">
+                                <input type="checkbox" className="mr-2" checked={selCats.includes(c)}
+                                       onChange={()=>toggle(c,selCats,setCats)}/> {c}
+                            </label>
+                        ))}
+                    </div>
+
+                    {/* price */}
+                    <div>
+                        <h3 className="font-semibold mb-2">Price ($)</h3>
+                        <div className="flex gap-2 items-center">
+                            <input type="number" value={price[0]} onChange={e=>setPrice([+e.target.value,price[1]])} className="border px-2 w-20"/>
+                            <span>-</span>
+                            <input type="number" value={price[1]} onChange={e=>setPrice([price[0],+e.target.value])} className="border px-2 w-20"/>
+                        </div>
+                    </div>
+
+                    {/* colours */}
+                    <div>
+                        <h3 className="font-semibold mb-2">Colors</h3>
+                        <div className="flex flex-wrap gap-2">
+                            {colorOptions.map(c=>(
+                                <button key={c} onClick={()=>toggle(c,selColors,setColors)}
+                                        className={`w-6 h-6 rounded-full border-2 ${selColors.includes(c)?'ring-2 ring-offset-1 ring-gray-600':''}`}
+                                        style={{ backgroundColor:c }} aria-label={c}/>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* size */}
+                    <div>
+                        <h3 className="font-semibold mb-2">Size</h3>
+                        <div className="flex flex-wrap gap-2">
+                            {sizeOptions.map(s=>(
+                                <button key={s} onClick={()=>toggle(s,selSizes,setSizes)}
+                                        className={`px-2 py-1 border text-xs ${selSizes.includes(s)?'bg-gray-200':''}`}>{s}</button>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* condition */}
+                    <div>
+                        <h3 className="font-semibold mb-2">Condition</h3>
+                        {conditionOpts.map(c=>(
+                            <label key={c} className="flex items-center mb-1">
+                                <input type="checkbox" className="mr-2" checked={selConds.includes(c)}
+                                       onChange={()=>toggle(c,selConds,setConds)}/> {c}
+                            </label>
+                        ))}
+                    </div>
+                </aside>
+
+                {/* MAIN GRID */}
+                <main className="flex-1">
+                    <h2 className="text-2xl font-semibold mb-4">Shop Products</h2>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {items.map(p=><ProductCard key={p.id} product={p}/>)}
+                    </div>
+
+                    {/* pagination */}
+                    <div className="flex justify-center items-center gap-2 mt-8">
+                        <button disabled={page===1} onClick={()=>setPage(p=>p-1)}
+                                style={{ color: brandBrown }} className="px-3 py-1 border disabled:opacity-50">Previous</button>
+                        {[...Array(pages)].map((_,i)=>(
+                            <button key={i} onClick={()=>setPage(i+1)}
+                                    style={{ color: brandBrown }}
+                                    className={`px-3 py-1 border ${page===i+1?'bg-gray-200':''}`}>{i+1}</button>
+                        ))}
+                        <button disabled={page===pages} onClick={()=>setPage(p=>p+1)}
+                                style={{ color: brandBrown }} className="px-3 py-1 border disabled:opacity-50">Next</button>
+                    </div>
+                </main>
+            </div>
+            <Footer/>
+        </div>
+    );
+};
+
+export default ExplorePage;
