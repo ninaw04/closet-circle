@@ -5,6 +5,8 @@ const port = 8800;
 
 const app = express();
 
+var profileRouter = require("./routes/profile");
+
 app.use(express.json());
 
 // cors enables communication from front end to back end
@@ -23,6 +25,8 @@ const db = new sqlite3.Database('./databases/closet_circle_database.db', sqlite3
     if (err) return console.error(err.message);
     console.log('Connected to the SQLite database.');
 })
+
+app.use("/api/profile", profileRouter(db));
 
 // FOR TESTING PURPOSES
 // const sqlCreateTable = `CREATE TABLE IF NOT EXISTS users(

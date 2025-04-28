@@ -281,19 +281,30 @@ const ProfilePage = () => {
 
     // State for active tab in sidebar and closet
     const [activeTab, setActiveTab] = useState('Profile');
+    const [closetItems, setClosetItems] = useState([]);
     const [activeClosetTab, setActiveClosetTab] = useState('My Closet');
 
-    // Closet items data (placeholder)
-    const closetItems = [
-        { id: 1, title: 'Gradient Graphic T-shirt', buyPrice: '$10', image: '/images/item1.jpg' },
-        { id: 2, title: 'Polo with Tipping Details', buyPrice: '$15', image: '/images/item2.jpg', sold: true },
-        { id: 3, title: 'Black Striped T-shirt', buyPrice: '$20', image: '/images/item3.jpg' },
-        { id: 4, title: 'Skinny Fit Jeans', buyPrice: '$25', image: '/images/item4.jpg', rentOnly: true },
-        { id: 5, title: 'Checkered Shirt', buyPrice: '$17', image: '/images/item5.jpg' },
-        { id: 6, title: 'Sleeve Striped T-shirt', buyPrice: '$9', image: '/images/item6.jpg' },
-        { id: 7, title: 'Vertical Striped Shirt', buyPrice: '$14', image: '/images/item7.jpg' },
-        { id: 8, title: 'Courage Graphic T-shirt', buyPrice: '$20', image: '/images/item8.jpg' }
-    ];
+
+    // Fetch closet items from backend for independent user
+    useEffect(() => {
+        if (user) {
+            fetch(`http://localhost:8800/api/profile/posts?ownerID=${user.email}`)
+            // fetch(`http://localhost:8800/api/profile/posts?ownerID=user1@email.com`) // for testing purposes
+                .then((response) => response.json())
+                .then((data) => {
+                    const transformedClosetItems = data.posts.map((post: any) => ({
+                        id: post.post_id,
+                        title: post.title,
+                        buyPrice: '$20',    // TODO: Needs to be updated
+                        image: post.item_picture,
+                        sold: false,        // TODO: Needs to be updated
+                        rentOnly: false,    // TODO: Needs to be updated
+                    }))
+                    setClosetItems(transformedClosetItems || []);
+                })
+                .catch((error) => console.error('Error fetching closet items: ', error));
+        }
+    }, [user]);
 
     // Filter closet items based on active tab
     const filteredItems =
@@ -456,14 +467,12 @@ const ProfilePage = () => {
 
                                 {/* Closet Items Grid */}
                                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-                                    {filteredItems.map(item => (
-                                        <ClosetItem
-                                            key={item.id}
-                                            title={item.title}
-                                            buyPrice={item.buyPrice}
-                                            image={item.image}
-                                            sold={item.sold}
-                                        />
+                                    {filteredItems.map((item) => (
+                                        <div key={item.id} className="bg-gray-100 rounded-lg p-4">
+                                            <img src={item.image} alt={item.title} className="w-full h-40 object-cover rounded-md mb-4" />
+                                            <h3 className="text-lg font-medium">{item.title}</h3>
+                                            <p className="text-gray-600">{item.buyPrice}</p>
+                                        </div>
                                     ))}
 
                                     {/* Add Item Button with square shape */}
