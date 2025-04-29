@@ -1,4 +1,4 @@
-;const express = require("express");
+; const express = require("express");
 const cors = require("cors");
 const sqlite3 = require('sqlite3').verbose();
 const port = 8800;
@@ -14,7 +14,7 @@ app.use(cors({
     origin: 'http://localhost:3000',
     methods: ['GET', 'POST'],
     credentials: true,
-  }));
+}));
 
 // const db = new sqlite3.Database('./databases/test.db', sqlite3.OPEN_READWRITE, (err) => {
 //     if (err) return console.error(err.message);
@@ -63,11 +63,35 @@ app.get('/api/users', (req, res) => {
     });
 });
 
+// Define a route to get all users
+app.get('/api/posts-all', (req, res) => {
+    const sqlSelectAll = `SELECT * FROM Post`;
+    db.all(sqlSelectAll, [], (err, rows) => {
+        if (err) {
+            res.status(500).json({ error: err.message });
+            return;
+        }
+        res.json({ users: rows });
+    });
+});
+
+// Define a route to get all users
+app.get('/api/post-cat', (req, res) => {
+    const sqlSelectAll = `SELECT * FROM Post_Category`;
+    db.all(sqlSelectAll, [], (err, rows) => {
+        if (err) {
+            res.status(500).json({ error: err.message });
+            return;
+        }
+        res.json({ users: rows });
+    });
+});
+
 // Define a route to add a new user
 app.post('/api/users', (req, res) => {
     const { first_name, last_name, username, password, email } = req.body;
     const sqlInsert = `INSERT INTO users (first_name, last_name, username, password, email) VALUES (?, ?, ?, ?, ?)`;
-    db.run(sqlInsert, [first_name, last_name, username, password, email], function(err) {
+    db.run(sqlInsert, [first_name, last_name, username, password, email], function (err) {
         if (err) {
             res.status(500).json({ error: err.message });
             return;
@@ -83,12 +107,12 @@ app.post('/api/users/new', (req, res) => {
     console.log(req.body);
     const { email, first_name, last_name, bio } = req.body;
     const sqlInsert = `INSERT INTO User (email, first_name, last_name, bio) VALUES (?, ?, ?, ?)`;
-    db.run(sqlInsert, [email, first_name, last_name, bio], function(err) {
+    db.run(sqlInsert, [email, first_name, last_name, bio], function (err) {
         if (err) {
             res.status(500).json({ error: err.message });
             return;
         }
-        res.json({ id: this.lastID }); 
+        res.json({ id: this.lastID });
     });
 });
 
@@ -96,17 +120,17 @@ app.post('/api/users/new', (req, res) => {
 // note: used in client/app/profile/page.tsx to display first & last name, bio
 app.get('/api/profile', (req, res) => {
     //console.log(req.body);
-    const {email} = req.query;
+    const { email } = req.query;
     console.log("email query " + email);
-    const sqlSelect =  `SELECT * FROM User WHERE email = ?`;
-    db.all(sqlSelect, email, function(err, rows) {
+    const sqlSelect = `SELECT * FROM User WHERE email = ?`;
+    db.all(sqlSelect, email, function (err, rows) {
         if (err) {
             res.status(500).json({ error: err.message });
             return;
         }
         console.log("running query");
         console.log("rows: " + rows);
-        res.json({ users: rows }); 
+        res.json({ users: rows });
     });
 });
 
