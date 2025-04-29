@@ -736,7 +736,7 @@ const ProfilePage: React.FC = () => {
                             {/* “add item” square */}
                             <div
                                 className="bg-gray-100 rounded-lg aspect-square flex items-center justify-center cursor-pointer"
-                                onClick={() => {}}
+                                onClick={() => {router.push('/profile/upload-item')}}
                             >
                                 <div className="flex flex-col items-center">
                                     <svg
