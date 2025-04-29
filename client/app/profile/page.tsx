@@ -505,10 +505,47 @@ const ProfilePage: React.FC = () => {
         PLACEHOLDER,
     ]);
 
+    // Ensure user is logged in - O.C.
+    if (!user) {
+        return;
+    }
+
+    // Check if new user has completed account creation - O.C.
+    const newUserCompleted = sessionStorage.getItem("newuser_complete");
+
+    // Redirect to continue account creation page if new user
+    // Otherwise display profile name
+    useEffect(() => {
+        if (!isLoading && user) {
+            setEmail(user.email || ''); // email from Auth0
+            console.log("here: email - " + user.email);
+
+            // Get specific user information from db - O.C.
+            fetch(`http://localhost:8800/api/profile?email=${user.email}`)
+            .then(response => response.json())
+            .then(data => {
+                // I added code in auth0 that stores first_login claim - O.C.
+                const firstLogin = user['http://localhost:3000/first_login'];
+                // Redirect to continue account creation page (where new users are saved to db after completion) - O.C.
+                if (data.users.length <= 0 && (firstLogin && !newUserCompleted)) {
+                    router.push('/users/new');
+
+                } else { // otherwise stay on profile page with subsequent logins
+                    console.log("returned: " + data.users[0]); // 1 user should be returned (1 account per email)
+                    setFirstName(data.users[0].first_name);
+                    setLastName(data.users[0].last_name);
+                }
+            })
+            .catch(error => console.error('Error:', error));
+         }
+     }, [user, isLoading, router]);
+
+
     /* fetch user’s closet */
     useEffect(() => {
         if (!user) return;
         fetch(`http://localhost:8800/api/profile/posts?ownerID=${user.email}`)
+        // fetch(`http://localhost:8800/api/profile/posts?ownerID=user1@email.com`) // for testing purposes
             .then((r) => r.json())
             .then((data) => {
                 const transformed: ClosetProduct[] = data.posts.map((p: any) => ({
@@ -535,21 +572,7 @@ const ProfilePage: React.FC = () => {
             .catch(console.error);
     }, [user]);
 
-    /* fetch profile info */
-    useEffect(() => {
-        if (isLoading || !user) return;
-        setEmail(user.email || '');
 
-        fetch(`http://localhost:8800/api/profile?email=${user.email}`)
-            .then((r) => r.json())
-            .then((d) => {
-                if (d.users?.length) {
-                    setFirstName(d.users[0].first_name);
-                    setLastName(d.users[0].last_name);
-                }
-            })
-            .catch(console.error);
-    }, [user, isLoading]);
 
     /* filtered view */
     const filtered = closetItems.filter((item) => {
@@ -560,7 +583,7 @@ const ProfilePage: React.FC = () => {
     });
 
     /* loading / unauth */
-    if (!user) return null;
+    //if (!user) return null;
     if (isLoading)
         return (
             <div
