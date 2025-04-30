@@ -533,8 +533,8 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({ open, onClose,
         if (!p.title.trim())   e.title    = 'Title is required';
         if (p.price <= 0)      e.price    = 'Price must be greater than 0';
         if (!p.forSale && !p.forRent)     e.saleRent = 'Select at least one';
-        if (p.colors.length === 0)        e.colors   = 'Choose at least one colour';
-        if (p.sizes.length  === 0)        e.sizes    = 'Choose at least one size';
+        if (p.colors == undefined || p.colors.length === 0)        e.colors   = 'Choose at least one colour';
+        if (p.sizes == undefined || p.sizes.length  === 0)        e.sizes    = 'Choose at least one size';
         if (!p.images[0].trim())          e.images   = 'At least one image URL is required';
         return e;
     };
@@ -732,7 +732,8 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({ open, onClose,
                         onClick={()=>{
                             const errs = validate(draft);
                             if (Object.keys(errs).length) { setErrors(errs); return; }
-
+                            //console.log(draft);
+                            console.log(draft.audience);
                             onSave(draft);
                             resetAndClose();
                         }}
@@ -862,6 +863,43 @@ const ProfilePage: React.FC = () => {
                 Loading…
             </div>
         );
+
+    // Format date yyyy-mm-dd
+    function getFormattedDate() {
+        const date = new Date();
+        const month = date.getMonth() + 1;
+        const day = date.getDate();
+        const yr = date.getFullYear();
+        const formattedDate = `${yr}-${month}-${day}`
+        return formattedDate;
+    }
+
+    const db_categories = [
+        { label: "Womens", checked: false, db_val: 6 },
+        { label: "Mens", checked: false, db_val: 7 },
+        { label: "Kids", checked: false, db_val: 8 },
+        { label: "Tops", checked: false, db_val: 1 },
+        { label: "Bottoms", checked: false, db_val: 4 },
+        { label: "Outerwear", checked: false, db_val: 3 },
+        { label: "Dresses", checked: false, db_val: 5 },
+        { label: "Shoes", checked: false, db_val: 2 },
+        { label: "Accessories", checked: false, db_val: 9 },
+        { label: "Black", checked: false, db_val: 10 },
+        { label: "White", checked: false, db_val: 11 },
+        { label: "Red", checked: false, db_val: 12 },
+        { label: "Blue", checked: false, db_val: 13 },
+        { label: "Pink", checked: false, db_val: 14 },
+    ];
+
+    function getDBCategories(type: any, audience: any) {
+        var db: any = [];
+        db_categories.forEach(cat => {
+            if (type == cat.label || audience == cat.label) {
+                db.push(cat.db_val);
+            }
+        });
+        return db;
+    }
 
     /* page */
     return (
@@ -1038,11 +1076,28 @@ const ProfilePage: React.FC = () => {
                             open={showAddModal}
                             onClose={() => setShowAddModal(false)}
                             onSave={(p) => {
-                                // 1) send to backend (optional)
-                                fetch('http://localhost:8800/api/profile/posts', {
+
+                                // Information to be stored - O.C.
+                                const postInfoDB = {
+                                    closet_id: 0,
+                                    owner_id: user.email,
+                                    title: p.title,
+                                    likes: 0,
+                                    item_picture: p.images[0], // db currently stores only 1 image
+                                    description: p.description,
+                                    date_posted: getFormattedDate(),
+                                    item_condition: p.condition,
+                                    categories: getDBCategories(p.type, p.audience), // array of category_id
+                                    size: p.sizes? p.sizes[0] : p.sizes, // TODO update if changing to not an array
+                                    for_sale: p.forSale,
+                                    for_rent: p.forRent
+                                };
+
+                                // 1) send to backend
+                                fetch('http://localhost:8800/api/profile/upload-item', {
                                     method : 'POST',
                                     headers: { 'Content-Type': 'application/json' },
-                                    body   : JSON.stringify({ ...p, ownerID: user?.email }),
+                                    body   : JSON.stringify(postInfoDB),
                                 }).catch(console.error);
 
                                 // 2) optimistic UI update

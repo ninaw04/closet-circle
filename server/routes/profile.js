@@ -23,12 +23,12 @@ module.exports = (db) => {
     // POST post for a specific user - O.C.
     router.post("/upload-item", (req, res) => {
         var post_id;
-        const { closet_id, owner_id, title, likes, item_picture, description, date_posted, item_condition, categoriesBox } = req.body;
+        const { closet_id, owner_id, title, likes, item_picture, description, date_posted, item_condition, categories, size, for_sale, for_rent } = req.body;
         const query = `
         INSERT INTO Post (closet_id, owner_id, title, likes, item_picture, description, date_posted, item_condition) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `;
         const query_post_category = `INSERT INTO Post_Category (post_id, category_id) VALUES (?, ?)`;
-        console.log(categoriesBox);
+        console.log(categories);
 
         db.run(
             query,
@@ -41,12 +41,11 @@ module.exports = (db) => {
                 post_id = this.lastID;
 
                 // Associate post with each category that was selected - O.C.
-                categoriesBox.forEach(category => {
-                    // if category was checked, insert into Post_Category
-                    if (category.checked) {
+                // categories is an array of integers representing the category_id
+                categories.forEach(category_id => {
                         db.run(
                             query_post_category,
-                            [post_id, category.db_val],
+                            [post_id, category_id],
                             function (err) {
                                 if (err) {
                                     res.status(500).json({ error: err.message });
@@ -54,8 +53,9 @@ module.exports = (db) => {
                                 }
                             }
                         )
-                    }
                 });
+
+                console.log("size: " + size + ", for sale: " + for_sale + ", for rent: " + for_rent);
 
                 res.json("item saved to db"); // return success
             })

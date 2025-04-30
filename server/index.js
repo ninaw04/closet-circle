@@ -63,7 +63,7 @@ app.get('/api/users', (req, res) => {
     });
 });
 
-// Define a route to get all users
+// For testing - route to get all posts
 app.get('/api/posts-all', (req, res) => {
     const sqlSelectAll = `SELECT * FROM Post`;
     db.all(sqlSelectAll, [], (err, rows) => {
@@ -75,7 +75,7 @@ app.get('/api/posts-all', (req, res) => {
     });
 });
 
-// Define a route to get all users
+// For testing - route to get all from Post_Category (posts associated with categories) 
 app.get('/api/post-cat', (req, res) => {
     const sqlSelectAll = `SELECT * FROM Post_Category`;
     db.all(sqlSelectAll, [], (err, rows) => {
