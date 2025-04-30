@@ -8,10 +8,11 @@ import Link from 'next/link';
 /* ============================================
    BRAND COLORS
 ============================================ */
-const brandNavy       = '#284472';
-const brandLightPink  = '#fdf5f3';
-const brandBrown      = '#675a5e';
-
+const brandNavy = '#284472';
+const brandLightPink = "#fdf5f3";
+const brandPink = "#FDEEEA";
+const brandLightBrown = "#efe4e1";
+const brandBrown = "#675a5e";
 /* ============================================
    TYPES
 ============================================ */
@@ -360,7 +361,7 @@ const ClosetCard: React.FC<{ product: ClosetProduct }> = ({ product }) => {
                 >
                     {product.sizes?.length && (
                         <p>
-                            <strong>Sizes:</strong> {product.sizes.join(', ')}
+                            <strong>Size:</strong> {product.sizes.join(', ')}
                         </p>
                     )}
                     {product.colors?.length && (
@@ -481,9 +482,277 @@ const Footer: React.FC = () => (
 );
 
 /* ============================================
+   ADD-PRODUCT MODAL
+   (put this just above ProfilePage in page.tsx
+   or extract to components/AddProductModal.tsx)
+============================================ */
+import { createPortal } from 'react-dom';
+
+
+/* ----- dropdown option sets (mirrors ExplorePage) ----- */
+const colorOptions     = ['black','white','red','blue','green','pink'];
+const sizeOptions      = ['XX-Small','X-Small','Small','Medium','Large','X-Large','XX-Large','3X-Large','4X-Large'];
+const conditionOptions = ['Brand new','Used – Like new','Used – Good','Used – Fair'];
+
+
+/* ----- local type (id comes from parent) ----- */
+type NewProduct = Omit<ClosetProduct, 'id'>;
+
+const emptyProduct: NewProduct = {
+    title : '',
+    price : 0,
+    forSale: true,
+    forRent: false,
+    type  : 'Tops',
+    audience: 'Womens',
+    colors: [],
+    sizes : [],
+    condition: conditionOptions[0],
+    description: '',
+    images: [''],
+};
+
+interface AddProductModalProps {
+    open: boolean;
+    onClose: () => void;
+    onSave: (p: NewProduct) => void;
+}
+
+export const AddProductModal: React.FC<AddProductModalProps> = ({ open, onClose, onSave }) => {
+    const [draft,  setDraft ] = useState<NewProduct>(emptyProduct);
+    const [errors, setErrors] = useState<Record<string,string>>({});
+
+    /* -------- helpers -------- */
+    const update  = <K extends keyof NewProduct>(field: K, value: NewProduct[K]) =>
+        setDraft(prev => ({ ...prev, [field]: value }));
+
+    const outline = `border-2 rounded px-2 py-1 w-full focus:outline-none`;
+
+    const validate = (p: NewProduct) => {
+        const e: Record<string,string> = {};
+        if (!p.title.trim())   e.title    = 'Title is required';
+        if (p.price <= 0)      e.price    = 'Price must be greater than 0';
+        if (!p.forSale && !p.forRent)     e.saleRent = 'Select at least one';
+        if (p.colors.length === 0)        e.colors   = 'Choose at least one colour';
+        if (p.sizes.length  === 0)        e.sizes    = 'Choose at least one size';
+        if (!p.images[0].trim())          e.images   = 'At least one image URL is required';
+        return e;
+    };
+
+    const resetAndClose = () => {
+        setDraft(emptyProduct);
+        setErrors({});
+        onClose();
+    };
+
+    if (!open) return null;
+
+    return createPortal(
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+            <div
+                className="bg-white w-full max-w-lg rounded-lg shadow-lg p-6 overflow-y-auto max-h-[90vh] space-y-4"
+                style={{ color: brandBrown }}
+            >
+                <h2 className="text-2xl font-semibold mb-2">Add a new item</h2>
+
+                {/* ---------- TITLE ---------- */}
+                <label className="block">
+                    <span className="font-medium">Title</span>
+                    <input
+                        className={outline}
+                        style={{ borderColor: errors.title ? 'red' : brandLightBrown }}
+                        value={draft.title}
+                        onChange={e => update('title', e.target.value)}
+                    />
+                    {errors.title && <p className="text-sm text-red-600">{errors.title}</p>}
+                </label>
+
+                {/* ---------- PRICE ---------- */}
+                <label className="block">
+                    <span className="font-medium">Price ($)</span>
+                    <input
+                        type="number"
+                        min={0}
+                        className={outline}
+                        style={{ borderColor: errors.price ? 'red' : brandLightBrown }}
+                        value={draft.price}
+                        onChange={e => update('price', Number(e.target.value))}
+                    />
+                    {errors.price && <p className="text-sm text-red-600">{errors.price}</p>}
+                </label>
+
+                {/* ---------- SALE / RENT ---------- */}
+                <div className="flex gap-6">
+                    <label className="flex items-center gap-2">
+                        <input
+                            type="checkbox"
+                            checked={draft.forSale}
+                            onChange={e => update('forSale', e.target.checked)}
+                        /> For&nbsp;Sale
+                    </label>
+                    <label className="flex items-center gap-2">
+                        <input
+                            type="checkbox"
+                            checked={draft.forRent}
+                            onChange={e => update('forRent', e.target.checked)}
+                        /> For&nbsp;Rent
+                    </label>
+                </div>
+                {errors.saleRent && <p className="text-sm text-red-600">{errors.saleRent}</p>}
+
+                {/* ---------- TYPE & AUDIENCE ---------- */}
+                <div className="flex gap-4">
+                    <label className="flex-1">
+                        <span className="font-medium">Type</span>
+                        <select
+                            className={outline}
+                            style={{ borderColor: brandLightBrown }}
+                            value={draft.type}
+                            onChange={e => update('type', e.target.value as NewProduct['type'])}
+                        >
+                            {['Tops','Bottoms','Outerwear','Dresses','Shoes','Accessories'].map(t=>(
+                                <option key={t}>{t}</option>
+                            ))}
+                        </select>
+                    </label>
+
+                    <label className="flex-1">
+                        <span className="font-medium">Audience</span>
+                        <select
+                            className={outline}
+                            style={{ borderColor: brandPink }}
+                            value={draft.audience}
+                            onChange={e => update('audience', e.target.value as NewProduct['audience'])}
+                        >
+                            {['Mens','Womens','Kids'].map(a=>(
+                                <option key={a}>{a}</option>
+                            ))}
+                        </select>
+                    </label>
+                </div>
+
+                {/* ---------- COLOURS ---------- */}
+                <label className="block">
+                    <span className="font-medium">Colours (⌘/Ctrl-click for multiple)</span>
+                    <select
+                        multiple
+                        className={outline}
+                        style={{ borderColor: errors.colors ? 'red' : brandLightBrown, height: '6rem' }}
+                        value={draft.colors}
+                        onChange={e => update(
+                            'colors',
+                            Array.from(e.target.selectedOptions).map(o=>o.value)
+                        )}
+                    >
+                        {colorOptions.map(c => <option key={c}>{c}</option>)}
+                    </select>
+                    {errors.colors && <p className="text-sm text-red-600">{errors.colors}</p>}
+                </label>
+
+                {/* ---------- SIZES ---------- */}
+                <label className="block">
+                    <span className="font-medium">Sizes</span>
+                    <select
+                        multiple
+                        className={outline}
+                        style={{ borderColor: errors.sizes ? 'red' : brandLightBrown, height: '8rem' }}
+                        value={draft.sizes}
+                        onChange={e => update(
+                            'sizes',
+                            Array.from(e.target.selectedOptions).map(o=>o.value)
+                        )}
+                    >
+                        {sizeOptions.map(s => <option key={s}>{s}</option>)}
+                    </select>
+                    {errors.sizes && <p className="text-sm text-red-600">{errors.sizes}</p>}
+                </label>
+
+                {/* ---------- CONDITION ---------- */}
+                <label className="block">
+                    <span className="font-medium">Condition</span>
+                    <select
+                        className={outline}
+                        style={{ borderColor: brandLightBrown }}
+                        value={draft.condition}
+                        onChange={e => update('condition', e.target.value)}
+                    >
+                        {conditionOptions.map(c => <option key={c}>{c}</option>)}
+                    </select>
+                </label>
+
+                {/* ---------- DESCRIPTION ---------- */}
+                <label className="block">
+                    <span className="font-medium">Description</span>
+                    <textarea
+                        className={outline + ' min-h-[80px]'}
+                        style={{ borderColor: brandLightBrown }}
+                        value={draft.description}
+                        onChange={e => update('description', e.target.value)}
+                    />
+                </label>
+
+                {/* ---------- IMAGES ---------- */}
+                <label className="block">
+                    <span className="font-medium">Image URLs (first required)</span>
+                    {draft.images.map((url, i) => (
+                        <input
+                            key={i}
+                            className={outline + ' mt-1'}
+                            style={{ borderColor: (errors.images && i===0) ? 'red' : brandLightBrown }}
+                            placeholder={`Image ${i+1} URL`}
+                            value={url}
+                            onChange={e => {
+                                const next = [...draft.images];
+                                next[i] = e.target.value;
+                                update('images', next);
+                            }}
+                        />
+                    ))}
+                    {errors.images && <p className="text-sm text-red-600">{errors.images}</p>}
+                    <button
+                        type="button"
+                        onClick={() => update('images', [...draft.images, ''])}
+                        className="mt-1 underline text-sm"
+                    >
+                        + Add another image
+                    </button>
+                </label>
+
+                {/* ---------- ACTION BUTTONS ---------- */}
+                <div className="flex justify-end gap-3 pt-2">
+                    <button
+                        onClick={resetAndClose}
+                        className="px-4 py-2 rounded border"
+                        style={{ color: brandBrown, borderColor: brandBrown }}
+                    >
+                        Cancel
+                    </button>
+
+                    <button
+                        onClick={()=>{
+                            const errs = validate(draft);
+                            if (Object.keys(errs).length) { setErrors(errs); return; }
+
+                            onSave(draft);
+                            resetAndClose();
+                        }}
+                        className="px-4 py-2 rounded text-white"
+                        style={{ backgroundColor: brandBrown }}
+                    >
+                        Save
+                    </button>
+                </div>
+            </div>
+        </div>,
+        document.body
+    );
+};
+
+/* ============================================
    PROFILE PAGE
 ============================================ */
 const ProfilePage: React.FC = () => {
+    const [showAddModal, setShowAddModal] = useState(false);
     const { user, isLoading } = useUser();
     const router               = useRouter();
 
@@ -734,9 +1003,14 @@ const ProfilePage: React.FC = () => {
                             ))}
 
                             {/* “add item” square */}
+                            {/*
                             <div
                                 className="bg-gray-100 rounded-lg aspect-square flex items-center justify-center cursor-pointer"
                                 onClick={() => {router.push('/profile/upload-item')}}
+                            > */}
+                            <div
+                                className="bg-gray-100 rounded-lg aspect-square flex items-center justify-center cursor-pointer"
+                                onClick={() => setShowAddModal(true)}
                             >
                                 <div className="flex flex-col items-center">
                                     <svg
@@ -760,6 +1034,25 @@ const ProfilePage: React.FC = () => {
                                 </div>
                             </div>
                         </div>
+                        <AddProductModal
+                            open={showAddModal}
+                            onClose={() => setShowAddModal(false)}
+                            onSave={(p) => {
+                                // 1) send to backend (optional)
+                                fetch('http://localhost:8800/api/profile/posts', {
+                                    method : 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body   : JSON.stringify({ ...p, ownerID: user?.email }),
+                                }).catch(console.error);
+
+                                // 2) optimistic UI update
+                                setClosetItems([
+                                    { id: Date.now(), ...p },        // temp id
+                                    ...closetItems,
+                                ]);
+                                setShowAddModal(false);
+                            }}
+                        />
                     </div>
                 </div>
             </div>
