@@ -49,12 +49,19 @@ CREATE TABLE Post(
 	owner_id VARCHAR(35) NOT NULL,
 	title VARCHAR(50), 
 	likes INTEGER DEFAULT 0, 
-	item_picture VARCHAR(500) NOT NULL,
 	description VARCHAR(500),
 	date_posted TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
 	item_condition VARCHAR(70) NOT NULL,
+	size VARCHAR(25) NOT NULL,
 	FOREIGN KEY (closet_id) REFERENCES Closet(closet_id) ON DELETE CASCADE,	
 	FOREIGN KEY (owner_id) REFERENCES User(email) ON DELETE CASCADE
+);
+
+CREATE TABLE Post_Image (
+	image_id INTEGER PRIMARY KEY AUTOINCREMENT,
+	post_id INTEGER NOT NULL,
+	image_url VARCHAR(500) NOT NULL,
+	FOREIGN KEY (post_id) REFERENCES Post(post_id) ON DELETE CASCADE
 );
 
 CREATE TABLE Borrow(
@@ -63,6 +70,7 @@ CREATE TABLE Borrow(
 	rental_end_date DATE NOT NULL,
 	FOREIGN KEY (post_id) REFERENCES Post(post_id) ON DELETE CASCADE	
 );
+
 
 CREATE TABLE Sell(
 	post_id INTEGER PRIMARY KEY,
@@ -88,7 +96,6 @@ CREATE TABLE Comment(
 	FOREIGN KEY (email) REFERENCES User(email) ON DELETE CASCADE,
 	FOREIGN KEY (post_id) REFERENCES Post(post_id) ON DELETE CASCADE
 );
-
 
 CREATE TABLE Review(
 	review_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -182,36 +189,58 @@ INSERT INTO Closet_Membership(closet_id, email) VALUES
 (5, 'user1@email.com'),
 (4, 'user1@email.com');
 
+
 INSERT INTO Category(category_id, name) VALUES
-(1, 'Shirts'),
-(2, 'Shoes'),
-(3, 'Jackets'),
-(4, 'Pants'),
-(5, 'Dresses'),
-(6, 'Women’s'),
-(7, 'Men’s'),
-(8, 'Summer'),
-(9, 'Fall'),
-(10, 'Winter'),
-(11, 'Spring');
+(1, 'Women’s'),
+(2, 'Men’s'),
+(3, 'Kids'),
+(4, 'Tops'),
+(5, 'Bottoms'),
+(6, 'Outerwear'),
+(7, 'Dresses'),
+(8, 'Shoes'),
+(9, 'Accessories'),
+(10, 'Black'),
+(11, 'White'),
+(12, 'Red'),
+(13, 'Blue'),
+(14, 'Green'),
+(15, 'Pink');
 
 
-INSERT INTO Post(post_id, closet_id, owner_id, title, likes, item_picture, description, date_posted, item_condition) VALUES
-(1, 1, 'user1@email.com', 'Black Shirt', 7, 'https://img.sonofatailor.com/images/customizer/product/extra-heavy-cotton/ss/Black.jpg', 'Description 1', '2025-04-01', 'good'),
-(2, 1, 'user2@email.com', 'Nike Dunk High Shoes', 13, 'https://www.google.com/url?sa=i&url=https%3A%2F%2Fwww.nike.com%2Fu%2Fcustom-nike-dunk-high-by-you-shoes-10001378&psig=AOvVaw0FkeDJQ639ppBOdWSltz0I&ust=1745160650519000&source=images&cd=vfe&opi=89978449&ved=0CBQQjRxqFwoTCNjIg5es5IwDFQAAAAAdAAAAABAE', 'Description 2', '2025-04-02', 'excellent'),
-(3, 2, 'user3@email.com', 'Oxford Brogue Shoes', 2, 'https://www.google.com/url?sa=i&url=https%3A%2F%2Fus.barkershoes.com%2Fproducts%2Fvaliant-multi-multi-coloured&psig=AOvVaw0FkeDJQ639ppBOdWSltz0I&ust=1745160650519000&source=images&cd=vfe&opi=89978449&ved=0CBQQjRxqFwoTCNjIg5es5IwDFQAAAAAdAAAAABAJ', 'Description 3', '2025-04-03', 'worn'),
-(4, 2, 'user4@email.com', 'Women’s Cargo Pants', 18, 'https://cdni.llbean.net/is/image/wim/505026_33335_41?hei=1095&wid=950&resMode=sharp2&defaultImage=llbprod/505026_0_44', 'Description 4', '2025-04-04', 'good'),
-(5, 2, 'user5@email.com', 'Women’s Flower Dress', 0, 'https://itsmilla.com/cdn/shop/files/MILLA_117_1024x.jpg?v=1696266364', 'Description 5', '2025-04-05', 'excellent'),
-(6, 2, 'user6@email.com', 'White Shirt', 11, 'https://img.sonofatailor.com/images/customizer/product/White_O_Crew_Regular_NoPocket.jpg', 'Description 6', '2025-04-05', 'good'),
-(7, 3, 'user7@email.com', 'Red Shirt', 5, 'https://i5.walmartimages.com/seo/Red-Shirt-for-Men-Gildan-2000-Men-T-Shirt-Cotton-Men-Shirt-Men-s-Trendy-Shirts-Best-Mens-Classic-Short-Sleeve-T-shirt_b41bd905-f204-4666-8b42-140387381a0b.32043a79df9d2166b1ed7b576bda9e21.jpeg', 'Description 7', '2025-04-05', 'worn'),
-(8, 3, 'user1@email.com', 'Button Up Shirt', 20, 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQVwrUty2m4obSlIzk1U-o5YFvpNdqjGqf0gw&s', 'Description 8', '2025-04-01', 'good'),
-(9, 3, 'user1@email.com', 'Retro Sneakers', 3, 'https://www.google.com/url?sa=i&url=https%3A%2F%2Forigoshoes.com%2Fproducts%2Fthe-retro-sneaker-gen3-in-natural-leather-sand-men&psig=AOvVaw0FkeDJQ639ppBOdWSltz0I&ust=1745160650519000&source=images&cd=vfe&opi=89978449&ved=0CBQQjRxqFwoTCNjIg5es5IwDFQAAAAAdAAAAABAT', 'Description 9', '2025-04-02', 'excellent'),
-(10, 4, 'user2@email.com', 'Women’s Leather Shoes', 9, 'https://www.google.com/url?sa=i&url=https%3A%2F%2Fwww.etsy.com%2Flisting%2F1225745832%2Fgenuine-leather-womens-shoes-handmade&psig=AOvVaw0FkeDJQ639ppBOdWSltz0I&ust=1745160650519000&source=images&cd=vfe&opi=89978449&ved=0CBQQjRxqFwoTCNjIg5es5IwDFQAAAAAdAAAAABAZ', 'Description 10', '2025-04-11', 'worn'),
-(11, 4, 'user2@email.com', 'Puma x Lamelo Shoes', 1, 'https://www.google.com/url?sa=i&url=https%3A%2F%2Fus.puma.com%2Fus%2Fen%2Fpd%2Fpuma-x-lamelo-ball-mb-04-iridescent-mens-basketball-shoes%2F310836&psig=AOvVaw0FkeDJQ639ppBOdWSltz0I&ust=1745160650519000&source=images&cd=vfe&opi=89978449&ved=0CBQQjRxqFwoTCNjIg5es5IwDFQAAAAAdAAAAABAf', 'Description 11', '2025-04-11', 'good'),
-(12, 4, 'user3@email.com', 'Old Navy Bomber Jacket', 16, 'https://oldnavy.gap.com/webcontent/0053/972/733/cn53972733.jpg', 'Description 12', '2025-04-07', 'excellent'),
-(13, 4, 'user3@email.com', 'Brown Work Pants', 8, 'https://truewerk.com/cdn/shop/files/t1_werkpants_mens_olive_flat_lay_4825e693-f588-4813-bff0-1d4c46ce82ce.jpg?v=1713822726', 'Description 13', '2025-04-09', 'good'),
-(14, 4, 'user4@email.com', 'Mini Rose Dress', 14, 'https://itsmilla.com/cdn/shop/files/MILLA_153_b6d2885e-3c17-4f05-b7de-f2319fa0fd12_1024x.jpg?v=1731517611', 'Description 14', '2025-04-11', 'worn'),
-(15, 5, 'user5@email.com', 'Vintage Swing Party Dress', 6, 'https://m.media-amazon.com/images/I/614gnlfQt2L._AC_SL1500_.jpg', 'Description 15', '2025-04-02', 'excellent');
+INSERT INTO Post(post_id, closet_id, owner_id, title, likes, description, date_posted, item_condition, size) VALUES
+(1, 1, 'user1@email.com', 'Black Shirt', 7, 'Description 1', '2025-04-01', 'good', 'Medium'),
+(2, 1, 'user2@email.com', 'Nike Dunk High Shoes', 13, 'Description 2', '2025-04-02', 'excellent', 'X-Large'),
+(3, 2, 'user3@email.com', 'Oxford Brogue Shoes', 2, 'Description 3', '2025-04-03', 'worn', 'Small'),
+(4, 2, 'user4@email.com', 'Women’s Cargo Pants', 18, 'Description 4', '2025-04-04', 'good', 'Large'),
+(5, 2, 'user5@email.com', 'Women’s Flower Dress', 0, 'Description 5', '2025-04-05', 'excellent', 'X-Small'),
+(6, 2, 'user6@email.com', 'White Shirt', 11, 'Description 6', '2025-04-05', 'good', 'Medium'),
+(7, 3, 'user7@email.com', 'Red Shirt', 5, 'Description 7', '2025-04-05', 'worn', 'XX-Small'),
+(8, 3, 'user1@email.com', 'Button Up Shirt', 20, 'Description 8', '2025-04-01', 'good', 'X-Large'),
+(9, 3, 'user1@email.com', 'Retro Sneakers', 3, 'Description 9', '2025-04-02', 'excellent', 'Small'),
+(10, 4, 'user2@email.com', 'Women’s Leather Shoes', 9, 'Description 10', '2025-04-11', 'worn', 'Large'),
+(11, 4, 'user2@email.com', 'Puma x Lamelo Shoes', 1, 'Description 11', '2025-04-11', 'good', 'Medium'),
+(12, 4, 'user3@email.com', 'Old Navy Bomber Jacket', 16, 'Description 12', '2025-04-07', 'excellent', 'XX-Small'),
+(13, 4, 'user3@email.com', 'Brown Work Pants', 8, 'Description 13', '2025-04-09', 'good', 'Small'),
+(14, 4, 'user4@email.com', 'Mini Rose Dress', 14, 'Description 14', '2025-04-11', 'worn', 'X-Small'),
+(15, 5, 'user5@email.com', 'Vintage Swing Party Dress', 6, 'Description 15', '2025-04-02', 'excellent', 'X-Large');
+
+INSERT INTO Post_Image(image_id, post_id, image_url) VALUES
+(1, 1, 'https://img.sonofatailor.com/images/customizer/product/extra-heavy-cotton/ss/Black.jpg'),
+(2, 2, 'https://www.google.com/url?sa=i&url=https%3A%2F%2Fwww.nike.com%2Fu%2Fcustom-nike-dunk-high-by-you-shoes-10001378&psig=AOvVaw0FkeDJQ639ppBOdWSltz0I&ust=1745160650519000&source=images&cd=vfe&opi=89978449&ved=0CBQQjRxqFwoTCNjIg5es5IwDFQAAAAAdAAAAABAE'),
+(3, 3, 'https://www.google.com/url?sa=i&url=https%3A%2F%2Fus.barkershoes.com%2Fproducts%2Fvaliant-multi-multi-coloured&psig=AOvVaw0FkeDJQ639ppBOdWSltz0I&ust=1745160650519000&source=images&cd=vfe&opi=89978449&ved=0CBQQjRxqFwoTCNjIg5es5IwDFQAAAAAdAAAAABAJ'),
+(4, 4, 'https://cdni.llbean.net/is/image/wim/505026_33335_41?hei=1095&wid=950&resMode=sharp2&defaultImage=llbprod/505026_0_44'),
+(5, 5, 'https://itsmilla.com/cdn/shop/files/MILLA_117_1024x.jpg?v=1696266364'),
+(6, 6, 'https://img.sonofatailor.com/images/customizer/product/White_O_Crew_Regular_NoPocket.jpg'),
+(7, 7, 'https://i5.walmartimages.com/seo/Red-Shirt-for-Men-Gildan-2000-Men-T-Shirt-Cotton-Men-Shirt-Men-s-Trendy-Shirts-Best-Mens-Classic-Short-Sleeve-T-shirt_b41bd905-f204-4666-8b42-140387381a0b.32043a79df9d2166b1ed7b576bda9e21.jpeg'),
+(8, 8, 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQVwrUty2m4obSlIzk1U-o5YFvpNdqjGqf0gw&s'),
+(9, 9, 'https://www.google.com/url?sa=i&url=https%3A%2F%2Forigoshoes.com%2Fproducts%2Fthe-retro-sneaker-gen3-in-natural-leather-sand-men&psig=AOvVaw0FkeDJQ639ppBOdWSltz0I&ust=1745160650519000&source=images&cd=vfe&opi=89978449&ved=0CBQQjRxqFwoTCNjIg5es5IwDFQAAAAAdAAAAABAT'),
+(10, 10, 'https://www.google.com/url?sa=i&url=https%3A%2F%2Fwww.etsy.com%2Flisting%2F1225745832%2Fgenuine-leather-womens-shoes-handmade&psig=AOvVaw0FkeDJQ639ppBOdWSltz0I&ust=1745160650519000&source=images&cd=vfe&opi=89978449&ved=0CBQQjRxqFwoTCNjIg5es5IwDFQAAAAAdAAAAABAZ'),
+(11, 11, 'https://www.google.com/url?sa=i&url=https%3A%2F%2Fus.puma.com%2Fus%2Fen%2Fpd%2Fpuma-x-lamelo-ball-mb-04-iridescent-mens-basketball-shoes%2F310836&psig=AOvVaw0FkeDJQ639ppBOdWSltz0I&ust=1745160650519000&source=images&cd=vfe&opi=89978449&ved=0CBQQjRxqFwoTCNjIg5es5IwDFQAAAAAdAAAAABAf'),
+(12, 12, 'https://oldnavy.gap.com/webcontent/0053/972/733/cn53972733.jpg'),
+(13, 13, 'https://truewerk.com/cdn/shop/files/t1_werkpants_mens_olive_flat_lay_4825e693-f588-4813-bff0-1d4c46ce82ce.jpg?v=1713822726'),
+(14, 14, 'https://itsmilla.com/cdn/shop/files/MILLA_153_b6d2885e-3c17-4f05-b7de-f2319fa0fd12_1024x.jpg?v=1731517611'),
+(15, 15, 'https://m.media-amazon.com/images/I/614gnlfQt2L._AC_SL1500_.jpg');
 
 INSERT INTO Post_Category (post_id, category_id) VALUES
 (1, 1),
@@ -315,4 +344,3 @@ VALUES
 (13, 'user2@email.com', 13, '2025-04-22 14:52:00', ''),  
 (14, 'user3@email.com', 14, '2025-04-22 14:52:00', ''),  
 (15, 'user4@email.com', 15, '2025-04-22 14:52:00', '');
-
