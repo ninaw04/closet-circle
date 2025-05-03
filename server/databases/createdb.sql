@@ -1,14 +1,14 @@
 CREATE TABLE "User"(
-	email VARCHAR(35) PRIMARY KEY,
-	first_name VARCHAR(40),
+	email VARCHAR(60) PRIMARY KEY,
+first_name VARCHAR(40),
 	last_name VARCHAR(40),
 	join_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
 	bio VARCHAR(350)
 );
 
 CREATE TABLE Friend(
-	email VARCHAR(35),
-	friend_id VARCHAR(35),
+	email VARCHAR(60),
+	friend_id VARCHAR(60),
 	PRIMARY KEY (email, friend_id),
 	FOREIGN KEY (email) REFERENCES User(email) ON DELETE CASCADE,
 	FOREIGN KEY (friend_id) REFERENCES User(email) ON DELETE CASCADE
@@ -24,7 +24,7 @@ CREATE TABLE Closet(
 
 CREATE TABLE Closet_Membership(
 	closet_id INTEGER NOT NULL,
-	email VARCHAR(35) NOT NULL,
+	email VARCHAR(60) NOT NULL,
 	PRIMARY KEY (closet_id, email),
 	FOREIGN KEY (closet_id) REFERENCES Closet(closet_id) ON DELETE CASCADE,
 	FOREIGN KEY (email) REFERENCES User(email) ON DELETE CASCADE
@@ -71,7 +71,6 @@ CREATE TABLE Borrow(
 	FOREIGN KEY (post_id) REFERENCES Post(post_id) ON DELETE CASCADE	
 );
 
-
 CREATE TABLE Sell(
 	post_id INTEGER PRIMARY KEY,
 	price REAL NOT NULL CHECK(price >= 0 AND price * 100 == CAST(price * 100 AS INTEGER)),
@@ -80,7 +79,7 @@ CREATE TABLE Sell(
 
 CREATE TABLE Wishlist(
 	name VARCHAR(35),
-	email VARCHAR(35),
+	email VARCHAR(60),
 	post_id INTEGER, 
 	PRIMARY KEY (name, email, post_id),
 	FOREIGN KEY (email) REFERENCES User(email) ON DELETE CASCADE,
@@ -89,7 +88,7 @@ CREATE TABLE Wishlist(
 
 CREATE TABLE Comment(
 	comment_id INTEGER PRIMARY KEY AUTOINCREMENT,
-	email VARCHAR(35) NOT NULL,
+	email VARCHAR(60) NOT NULL,
 	post_id INTEGER NOT NULL,
 	text VARCHAR(600) NOT NULL,
 	publish_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -99,7 +98,7 @@ CREATE TABLE Comment(
 
 CREATE TABLE Review(
 	review_id INTEGER PRIMARY KEY AUTOINCREMENT,
-	email VARCHAR(35) NOT NULL,
+	email VARCHAR(60) NOT NULL,
 	reviewer VARCHAR(35) NOT NULL,
 	publish_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 	rating INTEGER NOT NULL,
@@ -110,17 +109,24 @@ CREATE TABLE Review(
 
 CREATE TABLE Transactions(
 	transaction_id INTEGER PRIMARY KEY AUTOINCREMENT,
-	email VARCHAR(35) NOT NULL,
-	post_id INTEGER NOT NULL,
+	email VARCHAR(60) NOT NULL,
 	notes VARCHAR(350),
-transaction_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-	FOREIGN KEY (email) REFERENCES User(email) ON DELETE CASCADE,
+	transaction_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+	status VARCHAR(15) DEFAULT 'pending',
+	FOREIGN KEY (email) REFERENCES User(email) ON DELETE CASCADE
+);
+
+CREATE TABLE Transaction_Listing (
+	transaction_id INTEGER NOT NULL,
+	post_id INTEGER NOT NULL,
+	PRIMARY KEY (transaction_id, post_id),
+FOREIGN KEY (transaction_id) REFERENCES Transactions(transaction_id) ON DELETE CASCADE,
 	FOREIGN KEY (post_id) REFERENCES Post(post_id) ON DELETE CASCADE
 );
 
 CREATE TABLE User_Like(
 	post_id INTEGER NOT NULL,
-	email VARCHAR(35) NOT NULL,
+	email VARCHAR(60) NOT NULL,
 	PRIMARY KEY (post_id, email),
 	FOREIGN KEY (email) REFERENCES User(email) ON DELETE CASCADE,
 	FOREIGN KEY (post_id) REFERENCES Post(post_id) ON DELETE CASCADE
@@ -189,7 +195,6 @@ INSERT INTO Closet_Membership(closet_id, email) VALUES
 (5, 'user1@email.com'),
 (4, 'user1@email.com');
 
-
 INSERT INTO Category(category_id, name) VALUES
 (1, 'Women’s'),
 (2, 'Men’s'),
@@ -206,7 +211,6 @@ INSERT INTO Category(category_id, name) VALUES
 (13, 'Blue'),
 (14, 'Green'),
 (15, 'Pink');
-
 
 INSERT INTO Post(post_id, closet_id, owner_id, title, likes, description, date_posted, item_condition, size) VALUES
 (1, 1, 'user1@email.com', 'Black Shirt', 7, 'Description 1', '2025-04-01', 'good', 'Medium'),
@@ -327,20 +331,30 @@ VALUES
 (14, 6.99),  
 (15, 10.99);
 
-INSERT INTO Transactions (transaction_id, email, post_id, transaction_date, notes)  
+INSERT INTO Transactions (transaction_id, email, transaction_date, notes, status)  
 VALUES  
-(1, 'user2@email.com', 1, '2025-04-22 14:52:00', ''),  
-(2, 'user3@email.com', 2, '2025-04-22 14:52:00', ''),   
-(3, 'user4@email.com', 3, '2025-04-22 14:52:00', ''),    
-(4, 'user5@email.com', 4, '2025-04-22 14:52:00', ''),   
-(5, 'user6@email.com', 5, '2025-04-22 14:52:00', ''),    
-(6, 'user7@email.com', 6, '2025-04-22 14:52:00', ''),   
-(7, 'user1@email.com', 7, '2025-04-22 14:52:00', ''),  
-(8, 'user2@email.com', 8, '2025-04-22 14:52:00', ''),  
-(9, 'user5@email.com', 9, '2025-04-22 14:52:00', ''),  
-(10, 'user6@email.com', 10, '2025-04-22 14:52:00', ''),    
-(11, 'user7@email.com', 11, '2025-04-22 14:52:00', ''),  
-(12, 'user1@email.com', 12, '2025-04-22 14:52:00', ''),   
-(13, 'user2@email.com', 13, '2025-04-22 14:52:00', ''),  
-(14, 'user3@email.com', 14, '2025-04-22 14:52:00', ''),  
-(15, 'user4@email.com', 15, '2025-04-22 14:52:00', '');
+(1, 'user2@email.com', '2025-04-22 14:52:00', '', 'purchased'),  
+(2, 'user3@email.com', '2025-04-22 14:52:00', '', 'pending'),  
+(3, 'user4@email.com', '2025-04-22 14:52:00', '', 'purchased'),  
+(4, 'user5@email.com', '2025-04-22 14:52:00', '', 'purchased'),  
+(5, 'user6@email.com', '2025-04-22 14:52:00', '', 'pending'),  
+(6, 'user7@email.com', '2025-04-22 14:52:00', '', 'purchased'),  
+(7, 'user1@email.com', '2025-04-22 14:52:00', '', 'pending'),  
+(8, 'user2@email.com', '2025-04-22 14:52:00', '', 'purchased');
+
+INSERT INTO Transaction_Listing (transaction_id, post_id) VALUES  
+(1, 1),  
+(1, 2), 
+(2, 3),  
+(2, 4),  
+(3, 5),  
+(4, 6),  
+(4, 7),  
+(4, 8),  
+(5, 9),  
+(5, 10),  
+(6, 11),  
+(6, 12), 
+(7, 13),  
+(8, 14),  
+(8, 15);
