@@ -6,15 +6,37 @@ module.exports = (db) => {
     router.get("/posts", (req, res) => {
         console.log("getting posts");
         const { ownerID } = req.query;
-        const query = `SELECT * FROM Post WHERE owner_id = ?`;
+        const queryPosts = `SELECT * FROM Post WHERE owner_id = ?`;
+        const queryImages = `SELECT image_url FROM Post_Image WHERE post_id = ?`;
 
-        db.all(query, [ownerID], (err, rows) => {
+        db.all(queryPosts, [ownerID], (err, posts) => {
             if (err) {
                 console.error(err.message);
                 res.status(500).json({ error: err.message });
                 return;
             }
-            res.json({ posts: rows });
+
+            // Fetch images for each post
+            const postsWithImages = posts.map((post) => {
+                return new Promise((resolve, reject) => {
+                    db.all(queryImages, [post.post_id], (err, images) => {
+                        if (err) {
+                            reject(err);
+                            return;
+                        }
+                        post.images = images.map((img) => img.image_url);
+                        resolve(post);
+                    });
+                });
+            });
+
+            // After all images have been fetched for post
+            Promise.all(postsWithImages).then((results) => {
+                res.json({ posts: results });
+            }).catch((error) => {
+                console.error(error.message);
+                res.status(500).json({ error: error.message });
+            });
         });
     })
 

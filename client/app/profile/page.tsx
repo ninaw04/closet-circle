@@ -815,7 +815,7 @@ const ProfilePage: React.FC = () => {
     useEffect(() => {
         if (!user) return;
         fetch(`http://localhost:8800/api/profile/posts?ownerID=${user.email}`)
-        // fetch(`http://localhost:8800/api/profile/posts?ownerID=user1@email.com`) // for testing purposes
+        // fetch(`http://localhost:8800/api/profile/posts?ownerID=user4@email.com`) // for testing purposes
             .then((r) => r.json())
             .then((data) => {
                 const transformed: ClosetProduct[] = data.posts.map((p: any) => ({
@@ -825,7 +825,7 @@ const ProfilePage: React.FC = () => {
                     forSale   : !p.rent_only,
                     forRent   : p.rent_only ?? false,
                     sold      : p.sold ?? false,
-                    images    : p.item_picture ? [p.item_picture] : [],
+                    images    : p.images,
                     type      : p.type,
                     audience  : p.audience,
                     colors    : p.colors ?? [],
@@ -836,7 +836,7 @@ const ProfilePage: React.FC = () => {
                 /* keep placeholder first if you still want to see it when data exists
                    — remove if you only need it when list would otherwise be empty */
                 setClosetItems(
-                    transformed.length ? [PLACEHOLDER, ...transformed] : [PLACEHOLDER]
+                    transformed.length ? [...transformed] : [PLACEHOLDER]
                 );
             })
             .catch(console.error);
