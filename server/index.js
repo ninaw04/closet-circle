@@ -28,24 +28,6 @@ const db = new sqlite3.Database('./databases/closet_circle_database.db', sqlite3
 
 app.use("/api/profile", profileRouter(db));
 
-// FOR TESTING PURPOSES
-// const sqlCreateTable = `CREATE TABLE IF NOT EXISTS users(
-//     id INTEGER PRIMARY KEY,
-//     first_name TEXT,
-//     last_name TEXT,
-//     username TEXT,
-//     password TEXT,
-//     email TEXT
-// )`;
-
-// db.run(sqlCreateTable, (err) => {
-//     if (err) {
-//         return console.error(err.message);
-//     }
-//     console.log('Users table created or already exists.');
-// });
-
-
 // Default endpoint
 app.get('/', (req, res) => {
     res.json("hello this is the backend")

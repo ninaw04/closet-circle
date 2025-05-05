@@ -32,6 +32,13 @@ interface ClosetProduct {
     images     : string[];          // [] ⇒ gray placeholder
 }
 
+interface Friend {
+    email       : string;
+    first_name  : string;
+    last_name   : string;
+    profile_url : string | null;
+}
+
 /* ─── TEMP PLACEHOLDER ITEM (added to test UI!) ───────────────────────────────────────── */
 // const PLACEHOLDER: ClosetProduct = {
 //     id        : 10,
@@ -764,14 +771,18 @@ const ProfilePage: React.FC = () => {
 
     /* ui state */
     const [activeTab]       = useState('Profile');
+    const [activeProfileTab, setActiveProfileTab] = useState< 'My Closet' | 'Friends' | 'Following'>(
+        'My Closet'
+    );
     const [activeClosetTab, setActiveClosetTab] =
-        useState<'All' | 'Available' | 'For Rent' | 'Sold' | 'My Closet'>(
-            'My Closet'
+        useState<'All' | 'Available' | 'For Rent' | 'Sold'>(
+            'All'
         );
     const closetTabs = ['All', 'Available', 'For Rent', 'Sold'] as const;
 
     /* closet data (start with placeholder) */
     const [closetItems, setClosetItems] = useState<ClosetProduct[]>([]);
+    const [friends,   setFriends  ] = useState<Friend[]>([]);
 
     // Ensure user is logged in - O.C.
     if (!user) {
@@ -840,11 +851,21 @@ const ProfilePage: React.FC = () => {
             .catch(console.error);
     }, [user]);
 
+    /* fetch user friend list */
+    useEffect(() => {
+        if(!user) return;
+        fetch(`http://localhost:8800/api/profile/friends?email=${user.email}`)
+        // fetch(`http://localhost:8800/api/profile/friends?email=user4@email.com`) // for testing purposes
+            .then((r) => r.json())
+            .then((data) => {
+                setFriends(data.friends);
+            })
+    }, [user]);
 
 
     /* filtered view */
     const filtered = closetItems.filter((item) => {
-        if (activeClosetTab === 'All' || activeClosetTab === 'My Closet') return true;
+        if (activeClosetTab === 'All') return true;
         if (activeClosetTab === 'Available') return !item.sold;
         if (activeClosetTab === 'For Rent') return item.forRent && !item.sold;
         return item.sold;
@@ -1036,21 +1057,27 @@ const ProfilePage: React.FC = () => {
                             <div className="flex gap-4">
                                 <button
                                     className={`pb-2 px-1 font-medium text-xl ${
-                                        activeClosetTab === 'My Closet' ? 'border-b-2' : ''
+                                        activeProfileTab === 'My Closet' ? 'border-b-2' : ''
                                     }`}
                                     style={{
                                         color: brandNavy,
                                         borderColor:
-                                            activeClosetTab === 'My Closet' ? brandNavy : undefined,
+                                            activeProfileTab === 'My Closet' ? brandNavy : undefined,
                                     }}
-                                    onClick={() => setActiveClosetTab('My Closet')}
+                                    onClick={() => setActiveProfileTab('My Closet')}
                                 >
                                     My Closet
                                 </button>
                                 <button
-                                    className="pb-2 px-1 font-medium text-xl"
-                                    style={{ color: brandNavy }}
-                                    onClick={() => {}}
+                                    className={`pb-2 px-1 font-medium text-xl ${
+                                        activeProfileTab === 'Friends' ? 'border-b-2' : ''
+                                    }`}
+                                    style={{ 
+                                        color: brandNavy,
+                                        borderColor:
+                                            activeProfileTab === 'Friends' ? brandNavy : undefined,
+                                     }}
+                                    onClick={() => setActiveProfileTab('Friends')}
                                 >
                                     Friends
                                 </button>
@@ -1065,57 +1092,61 @@ const ProfilePage: React.FC = () => {
                         </div>
 
                         {/* filter tabs */}
-                        <div className="flex gap-2 mb-6">
-                            {closetTabs.map((t) => (
-                                <TabButton
-                                    key={t}
-                                    label={t}
-                                    active={activeClosetTab === t}
-                                    onClick={() =>
-                                        setActiveClosetTab(t as typeof activeClosetTab)
-                                    }
-                                />
-                            ))}
-                        </div>
-
+                        {activeProfileTab === 'My Closet' && (
+                            <div className="flex gap-2 mb-6">
+                                {closetTabs.map((t) => (
+                                    <TabButton
+                                        key={t}
+                                        label={t}
+                                        active={activeClosetTab === t}
+                                        onClick={() =>
+                                            setActiveClosetTab(t as typeof activeClosetTab)
+                                        }
+                                    />
+                                ))}
+                            </div>
+                        )}
+                        
                         {/* grid */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-                            {filtered.map((p) => (
-                                <ClosetCard key={p.id} product={p} />
-                            ))}
+                        {activeProfileTab === 'My Closet' && (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+                                {filtered.map((p) => (
+                                    <ClosetCard key={p.id} product={p} />
+                                ))}
 
-                            {/* “add item” square */}
-                            {/*
-                            <div
-                                className="bg-gray-100 rounded-lg aspect-square flex items-center justify-center cursor-pointer"
-                                onClick={() => {router.push('/profile/upload-item')}}
-                            > */}
-                            <div
-                                className="bg-gray-100 rounded-lg aspect-square flex items-center justify-center cursor-pointer"
-                                onClick={() => setShowAddModal(true)}
-                            >
-                                <div className="flex flex-col items-center">
-                                    <svg
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        width="40"
-                                        height="40"
-                                        viewBox="0 0 24 24"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        strokeWidth="1"
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        className="text-gray-600"
-                                    >
-                                        <line x1="12" y1="5" x2="12" y2="19" />
-                                        <line x1="5" y1="12" x2="19" y2="12" />
-                                    </svg>
-                                    <p className="mt-2 text-sm text-gray-600">
-                                        Click to Upload More Items
-                                    </p>
+                                {/* “add item” square */}
+                                {/*
+                                <div
+                                    className="bg-gray-100 rounded-lg aspect-square flex items-center justify-center cursor-pointer"
+                                    onClick={() => {router.push('/profile/upload-item')}}
+                                > */}
+                                <div
+                                    className="bg-gray-100 rounded-lg aspect-square flex items-center justify-center cursor-pointer"
+                                    onClick={() => setShowAddModal(true)}
+                                >
+                                    <div className="flex flex-col items-center">
+                                        <svg
+                                            xmlns="http://www.w3.org/2000/svg"
+                                            width="40"
+                                            height="40"
+                                            viewBox="0 0 24 24"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            strokeWidth="1"
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            className="text-gray-600"
+                                        >
+                                            <line x1="12" y1="5" x2="12" y2="19" />
+                                            <line x1="5" y1="12" x2="19" y2="12" />
+                                        </svg>
+                                        <p className="mt-2 text-sm text-gray-600">
+                                            Click to Upload More Items
+                                        </p>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
+                        )}
                         <AddProductModal
                             open={showAddModal}
                             onClose={() => setShowAddModal(false)}
@@ -1153,6 +1184,58 @@ const ProfilePage: React.FC = () => {
                                 setShowAddModal(false);
                             }}
                         />
+
+                        {/* Friends list */}
+                        {activeProfileTab === 'Friends' && (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+                                {friends.map((friend, index) => (
+                                    <div
+                                        key={index}
+                                        className="bg-gray-100 rounded-lg p-4 flex flex-col items-center text-center"
+                                    >
+                                        {/* Placeholder for profile image */}
+                                        <div className="w-20 h-20 rounded-full bg-gray-300 flex items-center justify-center mb-4">
+                                            <svg
+                                                xmlns="http://www.w3.org/2000/svg"
+                                                fill="none"
+                                                viewBox="0 0 24 24"
+                                                strokeWidth="1.5"
+                                                stroke="currentColor"
+                                                className="w-10 h-10 text-gray-500"
+                                            >
+                                                <path
+                                                    strokeLinecap="round"
+                                                    strokeLinejoin="round"
+                                                    d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501
+                                                    20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0
+                                                    0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z"
+                                                />
+                                            </svg>
+                                        </div>
+
+                                        {/* Friend's name */}
+                                        <h3 className="text-lg font-medium text-gray-800">
+                                            {friend.first_name} {friend.last_name}
+                                        </h3>
+
+                                        {/* Friend's email */}
+                                        <p className="text-sm text-gray-600">{friend.email}</p>
+
+                                        {/* Placeholder for profile link */}
+                                        <button
+                                            className="mt-4 px-4 py-2 text-sm font-medium text-white rounded-md"
+                                            style={{ backgroundColor: brandNavy }}
+                                            onClick={() => {
+                                                // Handle profile navigation (if applicable)
+                                                console.log(`Navigate to profile of ${friend.email}`);
+                                            }}
+                                        >
+                                            View Profile
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>

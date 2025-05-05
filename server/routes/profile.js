@@ -40,6 +40,48 @@ module.exports = (db) => {
         });
     })
 
+    // GET friends list
+    router.get("/friends", (req, res) => {
+        const { email } = req.query;
+        const queryFriends = `SELECT friend_id FROM Friend WHERE email = ?`;
+        // TODO UPDATE WITH FRIEND PROFILE URL
+        const queryFriendDetails = `SELECT first_name, last_name, email FROM User WHERE email = ?`;
+
+        db.all(queryFriends, [email], (err, rows) => {
+            if (err) {
+                console.error(err.message);
+                res.status(500).json({ error: err.messsage });
+                return;
+            }
+
+            if (!rows || rows.length === 0) {
+                res.json({ friends: [] });
+                return;
+            }
+
+            const friendDetailsPromises = rows.map((row) => {
+                return new Promise((resolve, reject) => {
+                    db.get(queryFriendDetails, [row.friend_id], (err, friend) => {
+                        if (err) {
+                            reject(err);
+                            return;
+                        }
+                        resolve(friend);
+                    });
+                });
+            });
+
+            Promise.all(friendDetailsPromises)
+                .then((friends) => {
+                    res.json({ friends });
+                })
+                .catch((error) => {
+                    console.error(error.message);
+                    res.status(500).json({ error: error.message });
+                });
+        })
+    })
+
     // post_id: Integer, title: String, closet_id: Integer, owner_id: String, likes: Integer, item_picture: String, description: String, date_posted: Date, clothing_category: String, item_condition: String
 
     // POST post for a specific user - O.C.
