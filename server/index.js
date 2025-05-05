@@ -66,13 +66,62 @@ app.get('/api/users', (req, res) => {
 // For testing - route to get all posts
 app.get('/api/posts-all', (req, res) => {
     const sqlSelectAll = `SELECT * FROM Post`;
-    db.all(sqlSelectAll, [], (err, rows) => {
-        if (err) {
-            res.status(500).json({ error: err.message });
-            return;
-        }
-        res.json({ users: rows });
-    });
+    const queryImages = `SELECT image_url FROM Post_Image WHERE post_id = ?`;
+    const queryUser = `SELECT first_name, last_name FROM User WHERE email = ?`;
+
+        db.all(sqlSelectAll, (err, posts) => {
+            if (err) {
+                console.error(err.message);
+                res.status(500).json({ error: err.message });
+                return;
+            }
+
+            // Fetch images and lister details for each post
+            const postsWithDetails = posts.map((post) => {
+                return new Promise((resolve, reject) => {
+                    db.all(queryImages, [post.post_id], (err, images) => {
+                        if (err) {
+                            reject(err);
+                            return;
+                        }
+                        post.images = images.map((img) => img.image_url);
+
+                        // Fetch lister details for the post
+                        db.get(queryUser, [post.owner_id], (err, user) => {
+                            if (err) {
+                                reject(err);
+                                return;
+                            }
+
+                            if (user) {
+                                // construct lister object
+                                post.lister = {
+                                    display: `${user.first_name} ${user.last_name.charAt(0)}.`,
+                                    username: post.owner_id,
+                                    avatarUrl: null,    // Placeholder for avatar URL
+                                };
+                            } else {
+                                // default lister object
+                                post.lister = {
+                                    display: 'Unknown',
+                                    username: 'unknown-user',
+                                    avatarUrl: null,
+                                }
+                            }
+                            resolve(post);
+                        })
+                    });
+                });
+            });
+
+            // After all images have been fetched for post
+            Promise.all(postsWithDetails).then((results) => {
+                res.json({ posts: results });
+            }).catch((error) => {
+                console.error(error.message);
+                res.status(500).json({ error: error.message });
+            });
+        });
 });
 
 // For testing - route to get all from Post_Category (posts associated with categories) 

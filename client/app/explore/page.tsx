@@ -3,6 +3,7 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { useUser } from '@auth0/nextjs-auth0/client';
+import { clearPreviewData } from 'next/dist/server/api-utils';
 
 /* ============================================
    BRAND COLORS
@@ -399,6 +400,8 @@ const Footer: React.FC = () => (
 ============================================ */
 const ExplorePage: React.FC = () => {
     /* state */
+    const [explorePageItems, setExplorePageItems] = useState<Product[]>([]);
+
     const [selTypes,  setTypes]  = useState<string[]>([]);
     const [selCats,   setCats]   = useState<string[]>([]);
     const [selConds,  setConds]  = useState<string[]>([]);
@@ -418,26 +421,79 @@ const ExplorePage: React.FC = () => {
     const sizeOptions    = ['XX-Small','X-Small','Small','Medium','Large','X-Large','XX-Large','3X-Large','4X-Large'];
     const colorOptions   = ['black','white','red','blue','green','pink'];
 
+    // Fetch products from backend
+    useEffect(() => {
+        console.log("in use effecg")
+        fetch('http://localhost:8800/api/posts-all')
+            .then((response) => {
+                console.log("Response status: ", response.status);
+                return response.json();
+            })
+            .then((data) => {
+                console.log('Fetched posts: ', data);
+
+                if (!data.posts || !Array.isArray(data.posts)) {
+                    console.error("Invalid data format:", data);
+                    setExplorePageItems([]);
+                    return;
+                }
+
+                const transformed: Product[] = data.posts.map((post: any) => ({
+                    id: post.post_id,
+                    title: post.title,
+                    price: post.price ?? 20, // Default price if not provided
+                    forSale: post.for_sale ?? false,
+                    forRent: post.for_rent ?? false,
+                    sold: post.sold ?? false,
+                    type: post.type ?? '',
+                    audience: post.audience ?? '',
+                    colors: post.colors ?? [],
+                    sizes: post.size ? [post.size] : [], // Wrap size in an array
+                    condition: post.item_condition,
+                    description: post.description,
+                    images: post.images, // Use the images array directly
+                    lister: {
+                        display: post.lister?.display ?? 'Unknown',
+                        username: post.lister?.username ?? 'unknown-user',
+                        avatarUrl: post.lister?.avatarUrl ?? avatar(post.lister?.display ?? 'Unknown'),
+                    },
+                }));
+
+                console.log("transformed items: ", transformed);
+                // setExplorePageItems(transformed);
+                setExplorePageItems((prevItems) => {
+                    // Compare the new items with the previous items to ensure a change
+                    if (JSON.stringify(prevItems) !== JSON.stringify(transformed)) {
+                        console.log("state updated withh new items")
+                        return transformed;
+                    }
+                    console.log("state is the same")
+                    return prevItems;
+                })
+            })
+            .catch((error) => console.log('Error fetching explore page items: ', error));
+    }, []);
+
     /* filter logic */
-    const filtered = useMemo(()=> PRODUCTS.filter(p=>{
-        if(selTypes.length   && !selTypes.includes(p.type)) return false;
-        if(selGender.length  && !selGender.includes(p.audience)) return false;
+    const filtered = useMemo(()=> explorePageItems.filter((p) => {
+        if(selTypes.length   && (!p.type || !selTypes.includes(p.type))) return false;
+        if(selGender.length  && (!p.audience || !selGender.includes(p.audience))) return false;
 
         if(selCats.length){
             const rentMatch = selCats.includes('For Rent') && p.forRent;
             const saleMatch = selCats.includes('For Sale') && p.forSale;
             if(!rentMatch && !saleMatch) return false;
         }
-        if(selConds.length && !selConds.includes(p.condition)) return false;
-        if(selSizes.length && !p.sizes.some(s=>selSizes.includes(s))) return false;
-        if(selColors.length&& !p.colors.some(c=>selColors.includes(c))) return false;
-        if(p.price<price[0] || p.price>price[1]) return false;
+        if (selConds.length && (!p.condition || !selConds.includes(p.condition))) return false;
+        if (selSizes.length && (!p.sizes || !p.sizes.some((s) => selSizes.includes(s)))) return false;
+        if (selColors.length && (!p.colors || !p.colors.some((c) => selColors.includes(c)))) return false;
+        if (p.price < price[0] || p.price > price[1]) return false;
         return true;
-    }).sort((a,b)=>{
-        if(sort==='Price: Low to High') return a.price-b.price;
-        if(sort==='Price: High to Low') return b.price-a.price;
-        return b.id-a.id;
-    }),[selTypes,selGender,selCats,selConds,selSizes,selColors,price,sort]);
+    }).sort((a, b) => {
+        if (sort === 'Price: Low to High') return a.price - b.price;
+        if (sort === 'Price: High to Low') return b.price - a.price;
+        return Number(b.id) - Number(a.id);
+    }),[selTypes,selGender,selCats,selConds,selSizes,selColors,price,sort,explorePageItems]);
 
     /* pagination */
     const pages = Math.ceil(filtered.length/perPage);

@@ -33,23 +33,23 @@ interface ClosetProduct {
 }
 
 /* ─── TEMP PLACEHOLDER ITEM (added to test UI!) ───────────────────────────────────────── */
-const PLACEHOLDER: ClosetProduct = {
-    id        : 10,
-    title     : 'White Mini Dress',
-    price     : 35,
-    forSale   : true,
-    forRent   : true,
-    type      : 'Dresses',
-    audience  : "Women's",
-    colors    : ['white'],
-    sizes     : ['Small'],
-    condition : 'Brand new',
-    description: 'Elegant white mini-dress, size S.',
-    images    : [
-        'https://encrypted-tbn3.gstatic.com/shopping?q=tbn:ANd9GcRG0fVSiGZw4HBqX7J0baOM1qogSWeeliHJt14VP-4t9xW9P5i6CaiYRdqZaensMNXdcrPl3kQdANfNQUEo7CMJbYOFUnYUTeR2-_A4-0eE_vy-3LcAf9aplg',
-        'https://encrypted-tbn1.gstatic.com/shopping?q=tbn:ANd9GcRX1cmSzFeL_MKu1PAsa9sSKQ7I3uHU7kKss01bEG88ACaj_8k0aO4opTRdu7l8WVS-BCW2jzyGTpjOB9PrzIkRXzFJC-8Q3yboxOGE_OLs6stOZeNSpbDPew'
-    ],
-};
+// const PLACEHOLDER: ClosetProduct = {
+//     id        : 10,
+//     title     : 'White Mini Dress',
+//     price     : 35,
+//     forSale   : true,
+//     forRent   : true,
+//     type      : 'Dresses',
+//     audience  : "Women's",
+//     colors    : ['white'],
+//     sizes     : ['Small'],
+//     condition : 'Brand new',
+//     description: 'Elegant white mini-dress, size S.',
+//     images    : [
+//         'https://encrypted-tbn3.gstatic.com/shopping?q=tbn:ANd9GcRG0fVSiGZw4HBqX7J0baOM1qogSWeeliHJt14VP-4t9xW9P5i6CaiYRdqZaensMNXdcrPl3kQdANfNQUEo7CMJbYOFUnYUTeR2-_A4-0eE_vy-3LcAf9aplg',
+//         'https://encrypted-tbn1.gstatic.com/shopping?q=tbn:ANd9GcRX1cmSzFeL_MKu1PAsa9sSKQ7I3uHU7kKss01bEG88ACaj_8k0aO4opTRdu7l8WVS-BCW2jzyGTpjOB9PrzIkRXzFJC-8Q3yboxOGE_OLs6stOZeNSpbDPew'
+//     ],
+// };
 
 /* ============================================
    HEADER
@@ -771,9 +771,7 @@ const ProfilePage: React.FC = () => {
     const closetTabs = ['All', 'Available', 'For Rent', 'Sold'] as const;
 
     /* closet data (start with placeholder) */
-    const [closetItems, setClosetItems] = useState<ClosetProduct[]>([
-        PLACEHOLDER,
-    ]);
+    const [closetItems, setClosetItems] = useState<ClosetProduct[]>([]);
 
     // Ensure user is logged in - O.C.
     if (!user) {
@@ -836,7 +834,7 @@ const ProfilePage: React.FC = () => {
                 /* keep placeholder first if you still want to see it when data exists
                    — remove if you only need it when list would otherwise be empty */
                 setClosetItems(
-                    transformed.length ? [...transformed] : [PLACEHOLDER]
+                    transformed.length ? [...transformed] : []
                 );
             })
             .catch(console.error);
