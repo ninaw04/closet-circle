@@ -207,11 +207,17 @@ const Header: React.FC = () => {
 /* -------------------------------------------
    PRODUCT CARD
 ------------------------------------------- */
-const ProductCard: React.FC<{ product: Product }> = ({ product }) => {
-    const [fav, setFav]   = useState(false);
+interface ProductCardProps {
+    product: Product;
+    /** start filled if true */
+    initialFav?: boolean;
+}
+
+const ProductCard: React.FC<ProductCardProps> = ({product, initialFav = false,}) => {
+    const [fav, setFav] = useState(initialFav);
     const [open, setOpen] = useState(false);
     const [i,   setI]     = useState(0);
-    const ref             = useRef<HTMLDivElement|null>(null);
+    const ref= useRef<HTMLDivElement|null>(null);
 
     /* click-away */
     useEffect(() => {
@@ -625,3 +631,10 @@ const ExplorePage: React.FC = () => {
 };
 
 export default ExplorePage;
+export {
+    Header,
+    ProductCard,
+    Footer,
+    type Product,
+    PRODUCTS,
+};
