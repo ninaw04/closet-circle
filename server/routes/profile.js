@@ -169,7 +169,7 @@ module.exports = (db) => {
     // POST a transaction
     router.post("/cart/new", (req, res) => {
         const { email } = req.query;
-        const newCartQuery = `INSERT INTO Transactions (email, transaction_date, status) VALUES (?, CURRENT_TIMESTAMP, 'pending')`;
+        const newCartQuery = `INSERT INTO Transactions (email, status) VALUES (?, 'pending')`;
         
         db.run(newCartQuery, [email], function (err) {
             if (err) {

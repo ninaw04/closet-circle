@@ -235,8 +235,8 @@ const CartPage: React.FC = () => {
 
     /* Fetch cart items */
     useEffect(() => {
-        // fetch(`http://localhost:8800/api/profile/cart?email=${user.email}`)
-        fetch(`http://localhost:8800/api/profile/cart?email=user3@email.com`)
+        fetch(`http://localhost:8800/api/profile/cart?email=${user.email}`)
+        // fetch(`http://localhost:8800/api/profile/cart?email=user3@email.com`)
             .then((response) => response.json())
             .then((data) => {
                 console.log('Fetched posts: ', data);
