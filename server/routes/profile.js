@@ -165,7 +165,41 @@ module.exports = (db) => {
     })
 
     // if nothing in cart yet, start a transaction
+    // if a transaction gets completed, start a new one
     // POST a transaction
+    router.post("/cart/new", (req, res) => {
+        const { email } = req.query;
+        const newCartQuery = `INSERT INTO Transactions (email, transaction_date, status) VALUES (?, CURRENT_TIMESTAMP, 'pending')`;
+        
+        db.run(newCartQuery, [email], function (err) {
+            if (err) {
+                console.error(err.message);
+                res.status(500).json({ error: "Failed to create a new cart" });
+                return;
+            }
+
+            res.json({ success: true, transactionId: this.lastID });
+        })
+    })
+
+    // update cart status
+    router.put("/cart/checkout", (req, res) => {
+        const { transactionId } = req.query;
+        const checkoutQuery = `
+            UPDATE Transactions SET transaction_date = CURRENT_TIMESTAMP, 
+                status = 'purchased'
+            WHERE email = ? AND status = 'pending'`;
+        
+        db.run(checkoutQuery, [transactionId], function (err) {
+            if (err) {
+                console.error(err.message);
+                res.status(500).json({ error: "Failed to checkout" });
+                return;
+            }
+
+            res.json({ success: true, message: "Checkout completed" });
+        })
+    })
 
     // PUT updates existing data
     // DELETE cart item

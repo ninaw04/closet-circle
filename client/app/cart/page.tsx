@@ -185,6 +185,50 @@ const CartPage: React.FC = () => {
         }
     };
 
+    // Handle checkout
+    const handleCheckout = async () => {
+        try {
+            // finish current transaction
+            const checkoutResponse = await fetch("http://localhost:8800/api/profile/cart/checkout", {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    transactionId: cartTransactionId,
+                }),
+            });
+
+            const checkoutData = await checkoutResponse.json();
+
+            if (!checkoutResponse.ok) {
+                console.error('Failled to complete checkout:', checkoutData.error);
+                return;
+            }
+
+            console.log("Checkout completed succcessfullly:", checkoutData);
+
+            const newCartResponse = await fetch(`http://localhost:8800/api/profile/cart/new?email=${user?.email}`, {
+                method: "POST",
+            });
+
+            const newCartData = await newCartResponse.json();
+
+            if (!newCartResponse.ok) {
+                console.error("Failed to create a new cart:", newCartData.error);
+                return;
+            }
+
+            console.log("New cart created successfully:", newCartData);
+
+            // Update cart state
+            setCartItems([]);
+            setCartTransactionId(newCartData.transactionId);
+        } catch (error) {
+            console.error("Error during checkout process:", error);
+        }
+    }
+
     if (!user) {
         return;
     }
@@ -202,7 +246,7 @@ const CartPage: React.FC = () => {
                     setCartItems([]);
                     return;
                 }
-                
+
                 const transformed: Product[] = data.cart.map((post: any) => ({
                     id: post.post_id,
                     title: post.title,
