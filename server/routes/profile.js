@@ -82,6 +82,108 @@ module.exports = (db) => {
         })
     })
 
+    // GET user's cart
+    // this just means a transaction that is under that user email, and is not closed
+    router.get("/cart", (req, res) => {
+        const { email } = req.query;
+        const queryTransaction = `SELECT transaction_id FROM Transactions WHERE email = ? AND status = 'pending'`;
+        const queryCart = `SELECT post_id FROM Transaction_Listing WHERE transaction_id = ?`
+        // const queryPosts = `SELECT title, price FROM Post WHERE post_id = ?`
+        const queryPosts = `SELECT title FROM Post WHERE post_id = ?`
+        const queryPostImage = `SELECT image_url FROM Post_Image WHERE post_id = ?`
+
+        db.get(queryTransaction, [email], (err, transaction) => {
+            if (err) {
+                console.error(err.message);
+                res.status(500).json({ error: err.message });
+                return;
+            }
+
+            if (!transaction) {
+                // no pending transaction found
+                res.json({ cart: [] });
+                return;
+            }
+
+            const transactionId = transaction.transaction_id;
+
+            // Find all post IDs in the transaction
+            db.all(queryCart, [transactionId], (err, cartItems) => {
+                if (err) {
+                    console.error(err.message);
+                    res.status(500).json({ error: err.message });
+                    return;
+                }
+
+                if (!cartItems || cartItems.length === 0) {
+                    // No items in the cart
+                    res.json({ cart: [] });
+                    return;
+                }
+
+                // Fetch details for each post in the cart
+                const cartDetailsPromises = cartItems.map((item) => {
+                    return new Promise((resolve, reject) => {
+                        db.get(queryPosts, [item.post_id], (err, post) => {
+                            if (err) {
+                                reject(err);
+                                return;
+                            }
+
+                            if (!post) {
+                                resolve(null);
+                                return;
+                            }
+
+                            // Fetch post images
+                            db.all(queryPostImage, [item.post_id], (err, images) => {
+                                if (err) {
+                                    reject(err);
+                                    return;
+                                }
+
+                                post.images = images.map((img) => img.image_url);
+                                resolve({ ...post, post_id: item.post_id });
+                            });
+                        });
+                    });
+                });
+
+                // Resolve all promises and return thte cart details
+                Promise.all(cartDetailsPromises)
+                    .then((cartDetails) => {
+                        // Filer out any null results
+                        const filteredCartDetails = cartDetails.filter((item) => item !== null);
+                        res.json({ transId: transactionId, cart: filteredCartDetails });
+                    })
+                    .catch((error) => {
+                        console.error(error.message);
+                        res.status(500).json({ error: error.message });
+                    })
+            })
+        })
+    })
+
+    // if nothing in cart yet, start a transaction
+    // POST a transaction
+
+    // PUT updates existing data
+    // DELETE cart item
+    router.delete("/cart/item", (req, res) => {
+        const { transactionId, postId } = req.body;
+        const deleteQuery = `DELETE FROM Transaction_Listing WHERE transaction_id = ? AND post_id = ?`;
+
+        db.run(deleteQuery, [transactionId, postId], function (err) {
+            if (err) {
+                console.error(err.message);
+                res.status(500).json({ error: "Failed to remove item from cart" });
+                return;
+            }
+
+            res.json({ success: true, message: "Item removed from cart" });
+        })
+    })
+
     // post_id: Integer, title: String, closet_id: Integer, owner_id: String, likes: Integer, item_picture: String, description: String, date_posted: Date, clothing_category: String, item_condition: String
 
     // POST post for a specific user - O.C.

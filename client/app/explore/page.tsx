@@ -138,6 +138,28 @@ const Header: React.FC = () => {
 
             {/* right-side buttons */}
             <div className="flex gap-4 items-center mr-4">
+                {/* shopping cart (only visible when logged in) */}
+                {user && (
+                    <Link href="/cart">
+                        <button className="p-2" style={{ color: brandNavy }} aria-label='Shopping Cart'>
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                strokeWidth="1.5"
+                                stroke="currentColor"
+                                className="w-6 h-6"
+                            >
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-1.5 6h11L17 13M9 21a1 1 0 1 1-2 0 1 1 0 0 1 2 0Zm8 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0Z"
+                                />
+                            </svg>
+                        </button>
+                    </Link>
+                )}
+                
                 {/* favourites stays visible for everyone */}
                 <Link href="/favorites">
                     <button className="p-2" style={{ color: brandNavy }} aria-label="Favourites">
@@ -184,6 +206,7 @@ const Header: React.FC = () => {
 
                         {menuOpen && (
                             <div className="absolute right-0 mt-2 w-40 bg-white border rounded-md shadow-lg py-1 text-sm">
+
                                 <Link href="/profile"
                                       className="block px-4 py-2 hover:bg-gray-100"
                                       style={{ color: brandNavy }}

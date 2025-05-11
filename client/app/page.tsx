@@ -93,6 +93,29 @@ const Header: React.FC = () => {
                             </svg>
                         </Link>
 
+                        {/* cart button */}
+                        {/* <Link
+                            href={user ? "/cart" : "/api/auth/login?returnTo=/cart"}
+                            className="p-2"
+                            style={{ color: 'white' }}
+                            aria-label="Cart"
+                        >
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                viewBox="0 0 24 24"
+                                strokeWidth={1.5}
+                                stroke="currentColor"
+                                fill="none"
+                                className="w-6 h-6"
+                            >
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    d="M3 3h2.25l1.5 9h12l1.5-9H6.75M3 3h0m0 0L4.5 12m-1.5-9h0m0 0L6 21h12l1.5-9H6m0 0h12m-12 0L4.5 12m12 0h0"
+                                />
+                            </svg>
+                        </Link> */}
+
                         {/* profile dropdown */}
                         <div className="relative" ref={dropRef}>
                             <button
