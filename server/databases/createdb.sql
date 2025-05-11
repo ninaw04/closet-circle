@@ -32,7 +32,7 @@ CREATE TABLE Closet_Membership(
 
 CREATE TABLE Closet_Creation(
 	closet_id INTEGER NOT NULL,
-	admin VARCHAR(35) NOT NULL,
+	admin VARCHAR(60) NOT NULL,
 	PRIMARY KEY (closet_id, admin),
 	FOREIGN KEY (closet_id) REFERENCES Closet(closet_id) ON DELETE CASCADE,
 	FOREIGN KEY (admin) REFERENCES User(email) ON DELETE CASCADE
@@ -46,13 +46,14 @@ CREATE TABLE Category (
 CREATE TABLE Post(
 	post_id INTEGER PRIMARY KEY AUTOINCREMENT,
 	closet_id INTEGER NOT NULL,
-	owner_id VARCHAR(35) NOT NULL,
+	owner_id VARCHAR(60) NOT NULL,
 	title VARCHAR(50), 
 	likes INTEGER DEFAULT 0, 
 	description VARCHAR(500),
 	date_posted TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
 	item_condition VARCHAR(70) NOT NULL,
 	size VARCHAR(25) NOT NULL,
+	price REAL,
 	FOREIGN KEY (closet_id) REFERENCES Closet(closet_id) ON DELETE CASCADE,	
 	FOREIGN KEY (owner_id) REFERENCES User(email) ON DELETE CASCADE
 );
@@ -61,28 +62,6 @@ CREATE TABLE Post_Image (
 	image_id INTEGER PRIMARY KEY AUTOINCREMENT,
 	post_id INTEGER NOT NULL,
 	image_url VARCHAR(500) NOT NULL,
-	FOREIGN KEY (post_id) REFERENCES Post(post_id) ON DELETE CASCADE
-);
-
-CREATE TABLE Borrow(
-	post_id INTEGER PRIMARY KEY,
-	rental_start_date DATE NOT NULL,
-	rental_end_date DATE NOT NULL,
-	FOREIGN KEY (post_id) REFERENCES Post(post_id) ON DELETE CASCADE	
-);
-
-CREATE TABLE Sell(
-	post_id INTEGER PRIMARY KEY,
-	price REAL NOT NULL CHECK(price >= 0 AND price * 100 == CAST(price * 100 AS INTEGER)),
-	FOREIGN KEY (post_id) REFERENCES Post(post_id) ON DELETE CASCADE	
-);
-
-CREATE TABLE Wishlist(
-	name VARCHAR(35),
-	email VARCHAR(60),
-	post_id INTEGER, 
-	PRIMARY KEY (name, email, post_id),
-	FOREIGN KEY (email) REFERENCES User(email) ON DELETE CASCADE,
 	FOREIGN KEY (post_id) REFERENCES Post(post_id) ON DELETE CASCADE
 );
 
@@ -99,7 +78,7 @@ CREATE TABLE Comment(
 CREATE TABLE Review(
 	review_id INTEGER PRIMARY KEY AUTOINCREMENT,
 	email VARCHAR(60) NOT NULL,
-	reviewer VARCHAR(35) NOT NULL,
+	reviewer VARCHAR(60) NOT NULL,
 	publish_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 	rating INTEGER NOT NULL,
 	text VARCHAR(600) NOT NULL,
@@ -107,21 +86,23 @@ CREATE TABLE Review(
 	FOREIGN KEY (reviewer) REFERENCES User(email) ON DELETE CASCADE
 );
 
-CREATE TABLE Transactions(
-	transaction_id INTEGER PRIMARY KEY AUTOINCREMENT,
-	email VARCHAR(60) NOT NULL,
-	notes VARCHAR(350),
-	transaction_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-	status VARCHAR(15) DEFAULT 'pending',
-	FOREIGN KEY (email) REFERENCES User(email) ON DELETE CASCADE
+CREATE TABLE Transactions (
+    transaction_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    email VARCHAR(60) NOT NULL,
+    status TEXT DEFAULT 'pending',
+    purchased_date TIMESTAMP,  
+    FOREIGN KEY (email) REFERENCES User(email) ON DELETE CASCADE
 );
 
 CREATE TABLE Transaction_Listing (
-	transaction_id INTEGER NOT NULL,
-	post_id INTEGER NOT NULL,
-	PRIMARY KEY (transaction_id, post_id),
-FOREIGN KEY (transaction_id) REFERENCES Transactions(transaction_id) ON DELETE CASCADE,
-	FOREIGN KEY (post_id) REFERENCES Post(post_id) ON DELETE CASCADE
+    transaction_id INTEGER NOT NULL,
+    post_id INTEGER NOT NULL,
+    bflag INTEGER DEFAULT 0,
+    sflag INTEGER DEFAULT 0,
+    rental_end_date DATE,
+    PRIMARY KEY (transaction_id, post_id),
+    FOREIGN KEY (transaction_id) REFERENCES Transactions(transaction_id) ON DELETE CASCADE,
+    FOREIGN KEY (post_id) REFERENCES Post(post_id) ON DELETE CASCADE
 );
 
 CREATE TABLE User_Like(
@@ -132,10 +113,11 @@ CREATE TABLE User_Like(
 	FOREIGN KEY (post_id) REFERENCES Post(post_id) ON DELETE CASCADE
 );
 
+
 CREATE TABLE Invitation (
 	invitation_id INTEGER PRIMARY KEY AUTOINCREMENT,
-	inviter VARCHAR(35) NOT NULL, 
-	invitee VARCHAR(35) NOT NULL,
+	inviter VARCHAR(60) NOT NULL, 
+	invitee VARCHAR(60) NOT NULL,
 	closet_id INTEGER NOT NULL,
 	time_sent TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 	status VARCHAR(15) DEFAULT 'pending',
@@ -151,6 +133,26 @@ CREATE TABLE Post_Category (
 	FOREIGN KEY (post_id) REFERENCES Post(post_id) ON DELETE CASCADE,
 	FOREIGN KEY (category_id) REFERENCES Category(category_id) ON DELETE CASCADE
 );
+
+CREATE TRIGGER Empty_Cart_New_User
+AFTER INSERT ON User
+FOR EACH ROW
+BEGIN
+	INSERT INTO Transactions (email, status)
+	VALUES (NEW.email, 'pending');
+END;
+
+CREATE TRIGGER New_Cart_After_Purchase
+AFTER UPDATE ON Transactions
+WHEN NEW.status = 'purchased' AND OLD.status = 'pending'
+BEGIN
+	UPDATE Transactions
+	SET purchased_date = CURRENT_TIMESTAMP
+	WHERE transaction_id = NEW.transaction_id;
+    
+	INSERT INTO Transactions (email, status)
+	VALUES (NEW.email, 'pending');
+END;
 
 INSERT INTO User(email, first_name, last_name, join_date, bio) VALUES
 ('user1@email.com', 'John', 'Smith', '2025-04-01', 'Bio for user 1'),
@@ -212,22 +214,22 @@ INSERT INTO Category(category_id, name) VALUES
 (14, 'Green'),
 (15, 'Pink');
 
-INSERT INTO Post(post_id, closet_id, owner_id, title, likes, description, date_posted, item_condition, size) VALUES
-(1, 1, 'user1@email.com', 'Black Shirt', 7, 'Description 1', '2025-04-01', 'good', 'Medium'),
-(2, 1, 'user2@email.com', 'Nike Dunk High Shoes', 13, 'Description 2', '2025-04-02', 'excellent', 'X-Large'),
-(3, 2, 'user3@email.com', 'Oxford Brogue Shoes', 2, 'Description 3', '2025-04-03', 'worn', 'Small'),
-(4, 2, 'user4@email.com', 'Women’s Cargo Pants', 18, 'Description 4', '2025-04-04', 'good', 'Large'),
-(5, 2, 'user5@email.com', 'Women’s Flower Dress', 0, 'Description 5', '2025-04-05', 'excellent', 'X-Small'),
-(6, 2, 'user6@email.com', 'White Shirt', 11, 'Description 6', '2025-04-05', 'good', 'Medium'),
-(7, 3, 'user7@email.com', 'Red Shirt', 5, 'Description 7', '2025-04-05', 'worn', 'XX-Small'),
-(8, 3, 'user1@email.com', 'Button Up Shirt', 20, 'Description 8', '2025-04-01', 'good', 'X-Large'),
-(9, 3, 'user1@email.com', 'Retro Sneakers', 3, 'Description 9', '2025-04-02', 'excellent', 'Small'),
-(10, 4, 'user2@email.com', 'Women’s Leather Shoes', 9, 'Description 10', '2025-04-11', 'worn', 'Large'),
-(11, 4, 'user2@email.com', 'Puma x Lamelo Shoes', 1, 'Description 11', '2025-04-11', 'good', 'Medium'),
-(12, 4, 'user3@email.com', 'Old Navy Bomber Jacket', 16, 'Description 12', '2025-04-07', 'excellent', 'XX-Small'),
-(13, 4, 'user3@email.com', 'Brown Work Pants', 8, 'Description 13', '2025-04-09', 'good', 'Small'),
-(14, 4, 'user4@email.com', 'Mini Rose Dress', 14, 'Description 14', '2025-04-11', 'worn', 'X-Small'),
-(15, 5, 'user5@email.com', 'Vintage Swing Party Dress', 6, 'Description 15', '2025-04-02', 'excellent', 'X-Large');
+INSERT INTO Post(post_id, closet_id, owner_id, title, likes, description, date_posted, item_condition, size, price) VALUES
+(1, 1, 'user1@email.com', 'Black Shirt', 7, 'Description 1', '2025-04-01', 'good', 'Medium', 24.99),
+(2, 1, 'user2@email.com', 'Nike Dunk High Shoes', 13, 'Description 2', '2025-04-02', 'excellent', 'X-Large', 129.99),
+(3, 2, 'user3@email.com', 'Oxford Brogue Shoes', 2, 'Description 3', '2025-04-03', 'worn', 'Small', 174.99),
+(4, 2, 'user4@email.com', 'Women’s Cargo Pants', 18, 'Description 4', '2025-04-04', 'good', 'Large', 54.99),
+(5, 2, 'user5@email.com', 'Women’s Flower Dress', 0, 'Description 5', '2025-04-05', 'excellent', 'X-Small', 84.99),
+(6, 2, 'user6@email.com', 'White Shirt', 11, 'Description 6', '2025-04-05', 'good', 'Medium', 19.99),
+(7, 3, 'user7@email.com', 'Red Shirt', 5, 'Description 7', '2025-04-05', 'worn', 'XX-Small', 14.99),
+(8, 3, 'user1@email.com', 'Button Up Shirt', 20, 'Description 8', '2025-04-01', 'good', 'X-Large', 34.99),
+(9, 3, 'user1@email.com', 'Retro Sneakers', 3, 'Description 9', '2025-04-02', 'excellent', 'Small', 89.99),
+(10, 4, 'user2@email.com', 'Women’s Leather Shoes', 9, 'Description 10', '2025-04-11', 'worn', 'Large', 69.99),
+(11, 4, 'user2@email.com', 'Puma x Lamelo Shoes', 1, 'Description 11', '2025-04-11', 'good', 'Medium', 109.99),
+(12, 4, 'user3@email.com', 'Old Navy Bomber Jacket', 16, 'Description 12', '2025-04-07', 'excellent', 'XX-Small', 149.99),
+(13, 4, 'user3@email.com', 'Brown Work Pants', 8, 'Description 13', '2025-04-09', 'good', 'Small', 44.99),
+(14, 4, 'user4@email.com', 'Mini Rose Dress', 14, 'Description 14', '2025-04-11', 'worn', 'X-Small', 39.99),
+(15, 5, 'user5@email.com', 'Vintage Swing Party Dress', 6, 'Description 15', '2025-04-02', 'excellent', 'X-Large', 119.99);
 
 INSERT INTO Post_Image(image_id, post_id, image_url) VALUES
 (1, 1, 'https://img.sonofatailor.com/images/customizer/product/extra-heavy-cotton/ss/Black.jpg'),
@@ -310,67 +312,35 @@ INSERT INTO Post_Category (post_id, category_id) VALUES
 (15, 8),
 (15, 11); 
 
-INSERT INTO Borrow (post_id, rental_start_date, rental_end_date)  
-VALUES  
-(1, '2025-04-25', '2025-05-02'),  
-(2, '2025-04-26', '2025-04-28'),
-(3, '2025-04-28', '2025-04-30'),
-(4, '2025-05-06', '2025-05-26'),
-(5, '2025-05-08', '2025-05-11'),
-(6, '2025-05-16', '2025-05-28'),
-(7, '2025-05-22', '2025-05-25'),
-(8, '2025-05-26', '2025-06-01');
+INSERT INTO Transactions (email, status, purchased_date) VALUES  
+('user2@email.com', 'purchased', '2025-04-22 14:52:00'),  
+('user3@email.com', 'pending', NULL),  
+('user4@email.com', 'purchased', '2025-04-22 14:52:00'),  
+('user5@email.com', 'purchased', '2025-04-22 14:52:00'),  
+('user6@email.com', 'pending', NULL),  
+('user7@email.com', 'purchased', '2025-04-22 14:52:00'),  
+('user1@email.com', 'pending', NULL),  
+('user2@email.com', 'purchased', '2025-04-22 14:52:00'),
+('user2@email.com', 'pending', NULL),
+('user4@email.com', 'pending', NULL),
+('user5@email.com', 'pending', NULL),
+('user7@email.com', 'pending', NULL);
 
-INSERT INTO Sell (post_id, price)  
-VALUES  
-(9, 29.99),  
-(10, 9.99),  
-(11, 1.99),  
-(12, 12.99),  
-(13, 4.99),  
-(14, 6.99),  
-(15, 10.99);
+INSERT INTO Transaction_Listing (transaction_id, post_id, bflag, sflag, rental_end_date) VALUES  
+(1, 1, 0, 1, NULL),
+(1, 2, 1, 0, '2025-05-02'),
+(2, 3, 1, 0, '2025-05-26'),  
+(2, 4, 1, 0, '2025-05-26'),  
+(3, 5, 0, 1, NULL),  
+(4, 6, 0, 1, NULL),  
+(4, 7, 1, 0, '2025-06-01'),  
+(4, 8, 0, 1, NULL),  
+(5, 9, 0, 1, NULL),  
+(5, 10, 0, 1, NULL),  
+(6, 11, 1, 0, '2025-05-28'),  
+(6, 12, 1, 0, '2025-05-28'),
+(7, 13, 0, 1, NULL),  
+(8, 14, 0, 1, NULL),  
+(8, 15, 1, 0, '2025-06-05');
 
-INSERT INTO Transactions (transaction_id, email, transaction_date, notes, status)  
-VALUES  
-(1, 'user2@email.com', '2025-04-22 14:52:00', '', 'purchased'),  
-(2, 'user3@email.com', '2025-04-22 14:52:00', '', 'pending'),  
-(3, 'user4@email.com', '2025-04-22 14:52:00', '', 'purchased'),  
-(4, 'user5@email.com', '2025-04-22 14:52:00', '', 'purchased'),  
-(5, 'user6@email.com', '2025-04-22 14:52:00', '', 'pending'),  
-(6, 'user7@email.com', '2025-04-22 14:52:00', '', 'purchased'),  
-(7, 'user1@email.com', '2025-04-22 14:52:00', '', 'pending'),  
-(8, 'user2@email.com', '2025-04-22 14:52:00', '', 'purchased');
-
-INSERT INTO Transaction_Listing (transaction_id, post_id) VALUES  
-(1, 1),  
-(1, 2), 
-(2, 3),  
-(2, 4),  
-(3, 5),  
-(4, 6),  
-(4, 7),  
-(4, 8),  
-(5, 9),  
-(5, 10),  
-(6, 11),  
-(6, 12), 
-(7, 13),  
-(8, 14),  
-(8, 15);
-
-INSERT INTO Wishlist (name, email, post_id) VALUES
-('Favorites', 'user1@email.com', 2),
-('Favorites', 'user1@email.com', 1),
-('Favorites', 'user1@email.com', 5),
-('Summer Items', 'user2@email.com', 3),
-('Shoes', 'user2@email.com', 10),
-('Miscellaneous', 'user3@email.com', 12),
-('Favorites', 'user2@email.com', 4),
-('Party', 'user4@email.com', 15),
-('Favorites', 'user4@email.com', 14),
-('Dresses', 'user5@email.com', 5),
-('Favorites', 'user5@email.com', 15),
-('Wishlist', 'user6@email.com', 6),
-('Wishlist', 'user7@email.com', 7);
 
