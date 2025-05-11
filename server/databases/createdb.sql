@@ -358,3 +358,19 @@ INSERT INTO Transaction_Listing (transaction_id, post_id) VALUES
 (7, 13),  
 (8, 14),  
 (8, 15);
+
+INSERT INTO Wishlist (name, email, post_id) VALUES
+('Favorites', 'user1@email.com', 2),
+('Favorites', 'user1@email.com', 1),
+('Favorites', 'user1@email.com', 5),
+('Summer Items', 'user2@email.com', 3),
+('Shoes', 'user2@email.com', 10),
+('Miscellaneous', 'user3@email.com', 12),
+('Favorites', 'user2@email.com', 4),
+('Party', 'user4@email.com', 15),
+('Favorites', 'user4@email.com', 14),
+('Dresses', 'user5@email.com', 5),
+('Favorites', 'user5@email.com', 15),
+('Wishlist', 'user6@email.com', 6),
+('Wishlist', 'user7@email.com', 7);
+
