@@ -53,7 +53,10 @@ CREATE TABLE Post(
 	date_posted TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
 	item_condition VARCHAR(70) NOT NULL,
 	size VARCHAR(25) NOT NULL,
-	price REAL,
+price REAL,
+ bflag INTEGER DEFAULT 0,
+    	sflag INTEGER DEFAULT 0,
+   	 rental_end_date DATE,
 	FOREIGN KEY (closet_id) REFERENCES Closet(closet_id) ON DELETE CASCADE,	
 	FOREIGN KEY (owner_id) REFERENCES User(email) ON DELETE CASCADE
 );
@@ -97,9 +100,6 @@ CREATE TABLE Transactions (
 CREATE TABLE Transaction_Listing (
     transaction_id INTEGER NOT NULL,
     post_id INTEGER NOT NULL,
-    bflag INTEGER DEFAULT 0,
-    sflag INTEGER DEFAULT 0,
-    rental_end_date DATE,
     PRIMARY KEY (transaction_id, post_id),
     FOREIGN KEY (transaction_id) REFERENCES Transactions(transaction_id) ON DELETE CASCADE,
     FOREIGN KEY (post_id) REFERENCES Post(post_id) ON DELETE CASCADE
@@ -214,22 +214,22 @@ INSERT INTO Category(category_id, name) VALUES
 (14, 'Green'),
 (15, 'Pink');
 
-INSERT INTO Post(post_id, closet_id, owner_id, title, likes, description, date_posted, item_condition, size, price) VALUES
-(1, 1, 'user1@email.com', 'Black Shirt', 7, 'Description 1', '2025-04-01', 'good', 'Medium', 24.99),
-(2, 1, 'user2@email.com', 'Nike Dunk High Shoes', 13, 'Description 2', '2025-04-02', 'excellent', 'X-Large', 129.99),
-(3, 2, 'user3@email.com', 'Oxford Brogue Shoes', 2, 'Description 3', '2025-04-03', 'worn', 'Small', 174.99),
-(4, 2, 'user4@email.com', 'Women’s Cargo Pants', 18, 'Description 4', '2025-04-04', 'good', 'Large', 54.99),
-(5, 2, 'user5@email.com', 'Women’s Flower Dress', 0, 'Description 5', '2025-04-05', 'excellent', 'X-Small', 84.99),
-(6, 2, 'user6@email.com', 'White Shirt', 11, 'Description 6', '2025-04-05', 'good', 'Medium', 19.99),
-(7, 3, 'user7@email.com', 'Red Shirt', 5, 'Description 7', '2025-04-05', 'worn', 'XX-Small', 14.99),
-(8, 3, 'user1@email.com', 'Button Up Shirt', 20, 'Description 8', '2025-04-01', 'good', 'X-Large', 34.99),
-(9, 3, 'user1@email.com', 'Retro Sneakers', 3, 'Description 9', '2025-04-02', 'excellent', 'Small', 89.99),
-(10, 4, 'user2@email.com', 'Women’s Leather Shoes', 9, 'Description 10', '2025-04-11', 'worn', 'Large', 69.99),
-(11, 4, 'user2@email.com', 'Puma x Lamelo Shoes', 1, 'Description 11', '2025-04-11', 'good', 'Medium', 109.99),
-(12, 4, 'user3@email.com', 'Old Navy Bomber Jacket', 16, 'Description 12', '2025-04-07', 'excellent', 'XX-Small', 149.99),
-(13, 4, 'user3@email.com', 'Brown Work Pants', 8, 'Description 13', '2025-04-09', 'good', 'Small', 44.99),
-(14, 4, 'user4@email.com', 'Mini Rose Dress', 14, 'Description 14', '2025-04-11', 'worn', 'X-Small', 39.99),
-(15, 5, 'user5@email.com', 'Vintage Swing Party Dress', 6, 'Description 15', '2025-04-02', 'excellent', 'X-Large', 119.99);
+INSERT INTO Post(post_id, closet_id, owner_id, title, likes, description, date_posted, item_condition, size, price, bflag, sflag, rental_end_date) VALUES
+(1, 1, 'user1@email.com', 'Black Shirt', 7, 'Description 1', '2025-04-01', 'good', 'Medium', 24.99, 0, 1, NULL),
+(2, 1, 'user2@email.com', 'Nike Dunk High Shoes', 13, 'Description 2', '2025-04-02', 'excellent', 'X-Large', 129.99, 1, 0, '2025-05-02'),
+(3, 2, 'user3@email.com', 'Oxford Brogue Shoes', 2, 'Description 3', '2025-04-03', 'worn', 'Small', 174.99, 1, 0, '2025-05-26'),
+(4, 2, 'user4@email.com', 'Women’s Cargo Pants', 18, 'Description 4', '2025-04-04', 'good', 'Large', 54.99, 1, 0, '2025-05-26'),
+(5, 2, 'user5@email.com', 'Women’s Flower Dress', 0, 'Description 5', '2025-04-05', 'excellent', 'X-Small', 84.99, 0, 1, NULL),
+(6, 2, 'user6@email.com', 'White Shirt', 11, 'Description 6', '2025-04-05', 'good', 'Medium', 19.99, 0, 1, NULL),
+(7, 3, 'user7@email.com', 'Red Shirt', 5, 'Description 7', '2025-04-05', 'worn', 'XX-Small', 14.99, 1, 0, '2025-06-01'),
+(8, 3, 'user1@email.com', 'Button Up Shirt', 20, 'Description 8', '2025-04-01', 'good', 'X-Large', 34.99, 0, 1, NULL),
+(9, 3, 'user1@email.com', 'Retro Sneakers', 3, 'Description 9', '2025-04-02', 'excellent', 'Small', 89.99, 0, 1, NULL),
+(10, 4, 'user2@email.com', 'Women’s Leather Shoes', 9, 'Description 10', '2025-04-11', 'worn', 'Large', 69.99, 0, 1, NULL),
+(11, 4, 'user2@email.com', 'Puma x Lamelo Shoes', 1, 'Description 11', '2025-04-11', 'good', 'Medium', 109.99, 1, 0, '2025-05-28'),
+(12, 4, 'user3@email.com', 'Old Navy Bomber Jacket', 16, 'Description 12', '2025-04-07', 'excellent', 'XX-Small', 149.99, 1, 0, '2025-05-28'),
+(13, 4, 'user3@email.com', 'Brown Work Pants', 8, 'Description 13', '2025-04-09', 'good', 'Small', 44.99, 0, 1, NULL),
+(14, 4, 'user4@email.com', 'Mini Rose Dress', 14, 'Description 14', '2025-04-11', 'worn', 'X-Small', 39.99, 0, 1, NULL),
+(15, 5, 'user5@email.com', 'Vintage Swing Party Dress', 6, 'Description 15', '2025-04-02', 'excellent', 'X-Large', 119.99, 1, 0, '2025-06-05');
 
 INSERT INTO Post_Image(image_id, post_id, image_url) VALUES
 (1, 1, 'https://img.sonofatailor.com/images/customizer/product/extra-heavy-cotton/ss/Black.jpg'),
@@ -326,21 +326,19 @@ INSERT INTO Transactions (email, status, purchased_date) VALUES
 ('user5@email.com', 'pending', NULL),
 ('user7@email.com', 'pending', NULL);
 
-INSERT INTO Transaction_Listing (transaction_id, post_id, bflag, sflag, rental_end_date) VALUES  
-(1, 1, 0, 1, NULL),
-(1, 2, 1, 0, '2025-05-02'),
-(2, 3, 1, 0, '2025-05-26'),  
-(2, 4, 1, 0, '2025-05-26'),  
-(3, 5, 0, 1, NULL),  
-(4, 6, 0, 1, NULL),  
-(4, 7, 1, 0, '2025-06-01'),  
-(4, 8, 0, 1, NULL),  
-(5, 9, 0, 1, NULL),  
-(5, 10, 0, 1, NULL),  
-(6, 11, 1, 0, '2025-05-28'),  
-(6, 12, 1, 0, '2025-05-28'),
-(7, 13, 0, 1, NULL),  
-(8, 14, 0, 1, NULL),  
-(8, 15, 1, 0, '2025-06-05');
-
-
+INSERT INTO Transaction_Listing (transaction_id, post_id) VALUES  
+(1, 1),
+(1, 2),
+(2, 3),  
+(2, 4),  
+(3, 5),  
+(4, 6),  
+(4, 7),  
+(4, 8),  
+(5, 9),  
+(5, 10),  
+(6, 11),  
+(6, 12),
+(7, 13),  
+(8, 14),  
+(8, 15);
