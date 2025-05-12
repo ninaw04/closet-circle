@@ -45,6 +45,7 @@ app.get('/api/posts-all', (req, res) => {
     const sqlSelectAll = `SELECT * FROM Post`;
     const queryImages = `SELECT image_url FROM Post_Image WHERE post_id = ?`;
     const queryUser = `SELECT first_name, last_name FROM User WHERE email = ?`;
+    const queryPostCategories = `SELECT category_id FROM Post_Category WHERE post_id = ?`;
 
         db.all(sqlSelectAll, (err, posts) => {
             if (err) {
@@ -62,6 +63,13 @@ app.get('/api/posts-all', (req, res) => {
                             return;
                         }
                         post.images = images.map((img) => img.image_url);
+
+                        db.all(queryPostCategories, [post.post_id], (err, categories) => {
+                            if (err) {
+                                reject(err);
+                                return;
+                            }
+                            post.categories = categories.map((cat) => cat.category_id);
 
                         // Fetch lister details for the post
                         db.get(queryUser, [post.owner_id], (err, user) => {
@@ -86,6 +94,7 @@ app.get('/api/posts-all', (req, res) => {
                                 }
                             }
                             resolve(post);
+                        })
                         })
                     });
                 });
