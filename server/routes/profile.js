@@ -83,13 +83,11 @@ module.exports = (db) => {
     })
 
     // GET user's cart
-    // this just means a transaction that is under that user email, and is not closed
     router.get("/cart", (req, res) => {
         const { email } = req.query;
         const queryTransaction = `SELECT transaction_id FROM Transactions WHERE email = ? AND status = 'pending'`;
         const queryCart = `SELECT post_id FROM Transaction_Listing WHERE transaction_id = ?`
-        // const queryPosts = `SELECT title, price FROM Post WHERE post_id = ?`
-        const queryPosts = `SELECT title FROM Post WHERE post_id = ?`
+        const queryPosts = `SELECT title, price FROM Post WHERE post_id = ?`
         const queryPostImage = `SELECT image_url FROM Post_Image WHERE post_id = ?`
 
         db.get(queryTransaction, [email], (err, transaction) => {
@@ -164,31 +162,12 @@ module.exports = (db) => {
         })
     })
 
-    // if nothing in cart yet, start a transaction
-    // if a transaction gets completed, start a new one
-    // POST a transaction
-    router.post("/cart/new", (req, res) => {
-        const { email } = req.query;
-        const newCartQuery = `INSERT INTO Transactions (email, status) VALUES (?, 'pending')`;
-        
-        db.run(newCartQuery, [email], function (err) {
-            if (err) {
-                console.error(err.message);
-                res.status(500).json({ error: "Failed to create a new cart" });
-                return;
-            }
-
-            res.json({ success: true, transactionId: this.lastID });
-        })
-    })
-
     // update cart status
-    router.put("/cart/checkout", (req, res) => {
+    router.put("/checkout", (req, res) => {
         const { transactionId } = req.query;
         const checkoutQuery = `
-            UPDATE Transactions SET transaction_date = CURRENT_TIMESTAMP, 
-                status = 'purchased'
-            WHERE email = ? AND status = 'pending'`;
+            UPDATE Transactions SET status = 'purchased'
+            WHERE transaction_id = ? AND status = 'pending'`;
         
         db.run(checkoutQuery, [transactionId], function (err) {
             if (err) {
@@ -198,6 +177,43 @@ module.exports = (db) => {
             }
 
             res.json({ success: true, message: "Checkout completed" });
+        })
+    })
+
+    router.put("/cart/addItem", (req, res) => {
+        const { transactionId, postId } = req.body;
+        const addItemQuery = `INSERT INTO Transaction_Listing (transaction_id, post_id) VALUES (?, ?)`;
+
+        db.run(addItemQuery, [transactionId, postId], function (err) {
+            if (err) {
+                console.error(err.message);
+                res.status(500).json({ error: "Failed to add item to cart" });
+                return;
+            }
+
+            res.json({ success: true, message: "Item added to cart" });
+        })
+    })
+
+    // get transaction id
+    router.get("/cart/id", (req, res) => {
+        const { email } = req.query;
+        const query = `SELECT transaction_id FROM Transactions WHERE email = ? AND status = 'pending'`;
+
+        db.get(query, [email], (err, row) => {
+            if (err) {
+                console.error(err.message);
+                res.status(500).json({ error: "Failed to retrieve transaction ID" });
+                return;
+            }
+
+            if (!row) {
+                // no pending transaction found
+                res.json({ transactionId: null, message: "No pending transaction found" });
+                return;
+            }
+
+            res.json({ transactionId: row.transaction_id });
         })
     })
 

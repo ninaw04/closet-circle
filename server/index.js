@@ -1,4 +1,4 @@
-; const express = require("express");
+const express = require("express");
 const cors = require("cors");
 const sqlite3 = require('sqlite3').verbose();
 const port = 8800;
@@ -12,14 +12,9 @@ app.use(express.json());
 // cors enables communication from front end to back end
 app.use(cors({
     origin: 'http://localhost:3000',
-    methods: ['GET', 'POST'],
+    methods: ['GET', 'POST', 'PUT'],
     credentials: true,
 }));
-
-// const db = new sqlite3.Database('./databases/test.db', sqlite3.OPEN_READWRITE, (err) => {
-//     if (err) return console.error(err.message);
-//     console.log('Connected to the SQLite database.');
-// })
 
 const db = new sqlite3.Database('./databases/closet_circle_database.db', sqlite3.OPEN_READWRITE, (err) => {
     if (err) return console.error(err.message);

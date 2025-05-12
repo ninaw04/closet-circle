@@ -13,14 +13,6 @@ const brandLightPink = "#fdf5f3";
 const brandPink = "#FDEEEA";
 const brandLightBrown = "#efe4e1";
 const brandBrown = "#675a5e";
-
-// interface CartItem {
-//     id: number;
-//     title: string;
-//     price: number;
-//     quantity: number;
-//     image: string;
-// }
 interface Product {
     id        : number;
     title     : string;
@@ -188,55 +180,48 @@ const CartPage: React.FC = () => {
     // Handle checkout
     const handleCheckout = async () => {
         try {
+            // fetch pending transaction id
+            const transactionIdResponse = await fetch(`http://localhost:8800/api/profile/cart/id?email=${user?.email}`)
+
+            const transactionIdData = await transactionIdResponse.json();
+            if (!transactionIdResponse.ok || !transactionIdData.transactionId) {
+                console.error('Failed to retrieve transaction ID:', transactionIdData.message || transactionIdData.error);
+                alert('Failed to retrieve transaction ID. Please try again.');
+                return;
+            }
+    
+            // Update the cartTransactionId state
+            setCartTransactionId(transactionIdData.transactionId);
+
             // finish current transaction
-            const checkoutResponse = await fetch("http://localhost:8800/api/profile/cart/checkout", {
+            const checkoutResponse = await fetch(`http://localhost:8800/api/profile/checkout?transactionId=${transactionIdData.transactionId}`, {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
                 },
-                body: JSON.stringify({
-                    transactionId: cartTransactionId,
-                }),
             });
 
             const checkoutData = await checkoutResponse.json();
 
             if (!checkoutResponse.ok) {
-                console.error('Failled to complete checkout:', checkoutData.error);
+                console.error('Failed to complete checkout:', checkoutData.error);
                 return;
             }
-
-            console.log("Checkout completed succcessfullly:", checkoutData);
-
-            const newCartResponse = await fetch(`http://localhost:8800/api/profile/cart/new?email=${user?.email}`, {
-                method: "POST",
-            });
-
-            const newCartData = await newCartResponse.json();
-
-            if (!newCartResponse.ok) {
-                console.error("Failed to create a new cart:", newCartData.error);
-                return;
-            }
-
-            console.log("New cart created successfully:", newCartData);
-
-            // Update cart state
-            setCartItems([]);
-            setCartTransactionId(newCartData.transactionId);
+            alert("Checkout completed successfully")
+            console.log("Checkout completed succcessfully:", checkoutData);
+            setCartItems([]); // SET NEW TRANSACTION ID
+            // setCartTransactionId(newCartData.transactionId);
         } catch (error) {
             console.error("Error during checkout process:", error);
         }
     }
 
-    if (!user) {
-        return;
-    }
-
     /* Fetch cart items */
     useEffect(() => {
+        if (!user) return;
+        
         fetch(`http://localhost:8800/api/profile/cart?email=${user.email}`)
-        // fetch(`http://localhost:8800/api/profile/cart?email=user3@email.com`)
+        // fetch(`http://localhost:8800/api/profile/cart?email=user1@email.com`)
             .then((response) => response.json())
             .then((data) => {
                 console.log('Fetched posts: ', data);
@@ -257,7 +242,7 @@ const CartPage: React.FC = () => {
                 setCartTransactionId(data.transId);
             })
             .catch((error) => console.log('Error fetching cart items: ', error));
-    }, []);
+    }, [user]);
 
     return (
         <div className="min-h-screen flex flex-col bg-white">
@@ -335,7 +320,7 @@ const CartPage: React.FC = () => {
                             </div>
                             <button
                                 className="mt-6 w-full px-4 py-2 text-white font-medium bg-blue-600 rounded"
-                                onClick={() => alert('Proceeding to checkout...')}
+                                onClick={() => handleCheckout()}
                             >
                                 Checkout
                             </button>

@@ -14,6 +14,8 @@ const brandPink = "#FDEEEA";
 const brandLightBrown = "#efe4e1";
 const brandBrown = "#675a5e";
 
+// const { user } = useUser();
+// const [explorePageItems, setExplorePageItems] = useState<Product[]>([]);
 
 /* -------------------------------------------
    TYPES
@@ -107,7 +109,7 @@ const PRODUCTS: Product[] = [
    HEADER
 ============================================ */
 const Header: React.FC = () => {
-    const { user }                = useUser();
+    const { user } = useUser();
     const [menuOpen, setMenuOpen] = useState(false);
     const dropRef                 = useRef<HTMLDivElement|null>(null);
 
@@ -234,13 +236,61 @@ interface ProductCardProps {
     product: Product;
     /** start filled if true */
     initialFav?: boolean;
+    setExplorePageItems: React.Dispatch<React.SetStateAction<Product[]>>;
 }
 
-const ProductCard: React.FC<ProductCardProps> = ({product, initialFav = false,}) => {
+const ProductCard: React.FC<ProductCardProps> = ({product, initialFav = false, setExplorePageItems}) => {
+    const { user } = useUser();   
     const [fav, setFav] = useState(initialFav);
     const [open, setOpen] = useState(false);
     const [i,   setI]     = useState(0);
     const ref= useRef<HTMLDivElement|null>(null);
+
+    const addToCart = async (product: Product, type: 'forSale' | 'forRent', user: any, setExplorePageItems: React.Dispatch<React.SetStateAction<Product[]>>) => {
+        try {
+            const transactionIdResponse = await fetch(`http://localhost:8800/api/profile/cart/id?email=${user?.email}`)
+
+            const transactionIdData = await transactionIdResponse.json();
+            if (!transactionIdResponse.ok || !transactionIdData.transactionId) {
+                console.error('Failed to retrieve transaction ID:', transactionIdData.message || transactionIdData.error);
+                alert('Failed to retrieve transaction ID. Please try again.');
+                return;
+            }
+
+            const response = await fetch(`http://localhost:8800/api/profile/cart/addItem`, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    transactionId: transactionIdData.transactionId,
+                    postId: product.id,
+                }),
+            });
+            
+            const data = await response.json();
+
+            if (!response.ok) {
+                console.error(`Failed to add item to cart (${type}):`, data.error);
+                alert(`Failed to add item to cart. Please try again.`);
+                return;
+            }
+
+            // Update the product's availability in the frontend state
+            setExplorePageItems((prevItems) =>
+                prevItems.map((item) =>
+                    item.id === product.id
+                        ? { ...item, [type]: false } // Update forSale or forRent to false
+                        : item
+                )
+            );
+
+            alert(`Item added to cart  successfully!`);
+        } catch (error) {
+            console.error(`Error adding item to cart (${type}):`, error);
+            alert("An error occured. Please try again.");
+        }
+    }
 
     /* click-away */
     useEffect(() => {
@@ -334,11 +384,13 @@ const ProductCard: React.FC<ProductCardProps> = ({product, initialFav = false,})
                         ? <div className="bg-gray-300 text-center py-1 px-3 rounded-sm w-full text-sm">Unavailable</div>
                         : <>
                             {product.forSale &&
-                                <button style={{ backgroundColor: brandBrown }} className="text-white text-sm py-1 px-3 rounded-sm flex-1">
+                                <button style={{ backgroundColor: brandBrown }} className="text-white text-sm py-1 px-3 rounded-sm flex-1"
+                                onClick={() => addToCart(product, 'forSale', user, setExplorePageItems)}>
                                     Buy for ${product.price}
                                 </button>}
                             {product.forRent &&
-                                <button style={{ color: brandBrown }} className="border border-gray-400 text-sm py-1 px-3 rounded-sm flex-1">
+                                <button style={{ color: brandBrown }} className="border border-gray-400 text-sm py-1 px-3 rounded-sm flex-1"
+                                onClick={() => addToCart(product, 'forRent', user, setExplorePageItems)}>
                                     Rent
                                 </button>}
                         </>}
@@ -471,8 +523,8 @@ const ExplorePage: React.FC = () => {
                     id: post.post_id,
                     title: post.title,
                     price: post.price ?? 20, // Default price if not provided
-                    forSale: post.for_sale ?? false,
-                    forRent: post.for_rent ?? false,
+                    forSale: post.sflag === 1,
+                    forRent: post.bflag === 1,
                     sold: post.sold ?? false,
                     type: post.type ?? '',
                     audience: post.audience ?? '',
@@ -631,7 +683,7 @@ const ExplorePage: React.FC = () => {
                     <h2 className="text-2xl font-semibold mb-4">Shop Products</h2>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {items.map(p=><ProductCard key={p.id} product={p}/>)}
+                        {items.map(p=><ProductCard key={p.id} product={p} setExplorePageItems={setExplorePageItems}/>)}
                     </div>
 
                     {/* pagination */}
