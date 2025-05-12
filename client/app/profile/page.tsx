@@ -849,23 +849,23 @@ const ProfilePage: React.FC = () => {
         // fetch(`http://localhost:8800/api/profile/posts?ownerID=user4@email.com`) // for testing purposes
             .then((r) => r.json())
             .then((data) => {
+                console.log(data);
                 const transformed: ClosetProduct[] = data.posts.map((p: any) => ({
                     id        : p.post_id,
                     title     : p.title,
                     price     : p.price ?? 20,
-                    forSale   : !p.rent_only,
-                    forRent   : p.rent_only ?? false,
+                    forSale   : p.sflag === 1,
+                    forRent   : p.bflag === 1,
                     sold      : p.sold ?? false,
                     images    : p.images,
-                    type      : p.type,
-                    audience  : p.audience,
-                    colors    : p.colors ?? [],
-                    sizes     : p.sizes ?? [],
-                    condition : p.condition,
+                    type      : getUIType(p.categories),
+                    audience  : getUIAudience(p.categories),
+                    colors    : getUIColors(p.categories),
+                    sizes     : [p.size],
+                    condition : getUICondition(p.item_condition),
                     description: p.description,
                 }));
-                /* keep placeholder first if you still want to see it when data exists
-                   — remove if you only need it when list would otherwise be empty */
+                
                 setClosetItems(
                     transformed.length ? [...transformed] : []
                 );
@@ -915,16 +915,23 @@ const ProfilePage: React.FC = () => {
         return formattedDate;
     }
 
-    const dbCategories = [
+    // map UI labels to db values
+    const audienceMap = [
         { label: "Women's", db_val: 1 },
         { label: "Men's", db_val: 2 },
-        { label: "Kids", db_val: 3 },
+        { label: "Kids", db_val: 3 }
+    ];
+
+    const typesMap = [
         { label: "Tops", db_val: 4 },
         { label: "Bottoms", db_val: 5 },
         { label: "Outerwear", db_val: 6 },
         { label: "Dresses", db_val: 7 },
         { label: "Shoes", db_val: 8 },
-        { label: "Accessories", db_val: 9 },
+        { label: "Accessories", db_val: 9 }
+    ];
+
+    const colorsMap = [
         { label: colorOptions[0], db_val: 10 },
         { label: colorOptions[1], db_val: 11 },
         { label: colorOptions[2], db_val: 12 },
@@ -932,6 +939,9 @@ const ProfilePage: React.FC = () => {
         { label: colorOptions[4], db_val: 14 },
         { label: colorOptions[5], db_val: 15 }
     ];
+
+    const dbCategories = audienceMap.concat(typesMap, colorsMap);
+    //console.log(dbCategories);
 
     const dbConditionVals = [
         { label: conditionOptions[0], db_val: "new"},
@@ -968,6 +978,27 @@ const ProfilePage: React.FC = () => {
             }
         });
         return dbCondition;
+    }
+
+    // returns one string for type ("Women's", "Men's", or "Kids")
+    function getUIAudience(dbVals: any) {
+        return audienceMap.filter(item => dbVals.includes(item.db_val)).map(item => item.label);
+    }
+
+    // returns one string for type (Tops, Bottoms, Outerwear, ...)
+    function getUIType(dbVals: any) {
+        return typesMap.filter(item => dbVals.includes(item.db_val)).map(item => item.label);
+    }
+
+    // returns array of colors as strings
+    function getUIColors(dbVals: any) {
+        return colorsMap.filter(item => dbVals.includes(item.db_val)).map(item => item.label);
+    }
+
+    // returns one string for condition
+    function getUICondition(condition: string) {
+        var matchedCondition = dbConditionVals.find(item => item.db_val == condition);
+        return matchedCondition?.label;
     }
 
     /* page */
@@ -1176,19 +1207,20 @@ const ProfilePage: React.FC = () => {
 
                                 // Information to be stored - O.C.
                                 const postInfoDB = {
-                                    closet_id: 0,
+                                    closet_id: 0, // default value
                                     owner_id: user.email,
                                     title: p.title,
-                                    likes: 0,
+                                    likes: 0, // default value
                                     item_pictures: p.images, // db currently stores only 1 image
                                     description: p.description,
                                     date_posted: getFormattedDate(),
                                     item_condition: getDBCondition(p.condition), // return either 'new', 'excellent', 'good', 'worn'
                                     categories: getDBCategories(p.type, p.audience, p.colors), // array of category_id
                                     size: p.sizes? p.sizes[0] : p.sizes, // TODO update if changing to not an array
-                                    for_sale: p.forSale,
-                                    for_rent: p.forRent,
-                                    price: p.price
+                                    for_sale: p.forSale == true ? 1 : 0,
+                                    for_rent: p.forRent == true ? 1 : 0,
+                                    price: p.price,
+                                    rental_date: ""
                                 };
 
                                 // 1) send to backend

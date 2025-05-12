@@ -8,6 +8,7 @@ module.exports = (db) => {
         const { ownerID } = req.query;
         const queryPosts = `SELECT * FROM Post WHERE owner_id = ?`;
         const queryImages = `SELECT image_url FROM Post_Image WHERE post_id = ?`;
+        const queryPostCategories = `SELECT category_id FROM Post_Category WHERE post_id = ?`;
 
         db.all(queryPosts, [ownerID], (err, posts) => {
             if (err) {
@@ -17,7 +18,7 @@ module.exports = (db) => {
             }
 
             // Fetch images for each post
-            const postsWithImages = posts.map((post) => {
+            const postsImagesCategories = posts.map((post) => {
                 return new Promise((resolve, reject) => {
                     db.all(queryImages, [post.post_id], (err, images) => {
                         if (err) {
@@ -25,13 +26,21 @@ module.exports = (db) => {
                             return;
                         }
                         post.images = images.map((img) => img.image_url);
+                        //resolve(post);
+                        db.all(queryPostCategories, [post.post_id], (err, categories) => {
+                        if (err) {
+                            reject(err);
+                            return;
+                        }
+                        post.categories = categories.map((cat) => cat.category_id);
                         resolve(post);
+                    });
                     });
                 });
             });
 
             // After all images have been fetched for post
-            Promise.all(postsWithImages).then((results) => {
+            Promise.all(postsImagesCategories).then((results) => {
                 res.json({ posts: results });
             }).catch((error) => {
                 console.error(error.message);
@@ -39,6 +48,7 @@ module.exports = (db) => {
             });
         });
     })
+
 
     // GET friends list
     router.get("/friends", (req, res) => {
@@ -239,17 +249,15 @@ module.exports = (db) => {
     // POST post for a specific user - O.C.
     router.post("/upload-item", (req, res) => {
         var post_id;
-        const { closet_id, owner_id, title, likes, item_pictures, description, date_posted, item_condition, categories, size, for_sale, for_rent, price} = req.body;
-        const query = `INSERT INTO Post (closet_id, owner_id, title, likes, description, date_posted, item_condition, size) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
+        const { closet_id, owner_id, title, likes, item_pictures, description, date_posted, item_condition, categories, size, for_sale, for_rent, price, rental_date } = req.body;
+        const query = `INSERT INTO Post (closet_id, owner_id, title, likes, description, date_posted, item_condition, size, price, bflag, sflag, rental_end_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
         const query_post_category = `INSERT INTO Post_Category (post_id, category_id) VALUES (?, ?)`;
         const query_post_images = `INSERT INTO Post_Image (post_id, image_url) VALUES (?, ?)`;
-        const query_borrow = `INSERT INTO Borrow (post_id, rental_start_date, rental_end_date) VALUES (?, ?, ?)`;
-        const query_sell = `INSERT INTO Sell (post_id, price) VALUES (?, ?)`;
         console.log(categories);
 
         db.run(
             query,
-            [closet_id, owner_id, title, likes, description, date_posted, item_condition, size],
+            [closet_id, owner_id, title, likes, description, date_posted, item_condition, size, price, for_rent, for_sale],
             function (err) {
                 if (err) {
                     console.log("error inserting inital post");
@@ -289,38 +297,6 @@ module.exports = (db) => {
                             }
                         )
                 });
-
-                // Borrow post
-                if (for_rent) {
-                    db.run(
-                        query_borrow,
-                        [post_id, "2025-05-01", "2020-05-07"],
-                        function (err) {
-                            if (err) {
-                                console.log("error inserting rent post");
-                                res.status(500).json({ error: err.message });
-                                return;
-                            }
-                        }
-                    )
-                }
-
-                // Sell post
-                if (for_sale) {
-                    db.run(
-                        query_sell,
-                        [post_id, price],
-                        function (err) {
-                            if (err) {
-                                console.log("error inserting sell post");
-                                res.status(500).json({ error: err.message });
-                                return;
-                            }
-                        }
-                    )
-                }
-
-                console.log("size: " + size + ", for sale: " + for_sale + ", for rent: " + for_rent);
 
                 res.json("item saved to db"); // return success
             })
