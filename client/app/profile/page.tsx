@@ -1022,7 +1022,12 @@ const ProfilePage: React.FC = () => {
                         <SidebarItem
                             label="Order History"
                             active={false}
-                            onClick={() => router.push('/order-history')}
+                            onClick={() => router.push('/profile/order-history')}
+                        />
+                        <SidebarItem
+                            label="Seller History"
+                            active={false}
+                            onClick={() => router.push('/profile/seller-history')}
                         />
                         <SidebarItem
                             label="Policies"
