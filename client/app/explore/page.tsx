@@ -32,8 +32,8 @@ interface Product {
     price     : number;
     forSale   : boolean;
     forRent   : boolean;
-    type      : 'Tops'|'Bottoms'|'Outerwear'|'Dresses'|'Shoes'|'Accessories';
-    audience  : 'Mens'|'Womens'|'Kids';
+    type      : string[]; //'Tops'|'Bottoms'|'Outerwear'|'Dresses'|'Shoes'|'Accessories';
+    audience  : string[]; //"Men's" |"Women's"|"Kids";
     colors    : string[];
     sizes     : string[];
     condition : string;
@@ -51,52 +51,52 @@ const avatar = (name: string) =>
 ------------------------------------------- */
 const PRODUCTS: Product[] = [
     { id:1, title:'Loose Fit Bermuda Shorts', price:11, forSale:false, forRent:true,
-        type:'Bottoms', audience:'Mens', colors:['black'], sizes:['Small','Medium'],
+        type:['Bottoms'], audience:["Men's"], colors:['black'], sizes:['Small','Medium'],
         condition:'Brand new', description:'Comfortable everyday Bermuda shorts.', images:[],
         lister:{display:'Nancy L.', username:'nancy-l', avatarUrl:avatar('Nancy L')} },
 
     { id:2, title:'Courage Graphic T-Shirt', price:20, forSale:true,  forRent:false,
-        type:'Tops', audience:'Mens', colors:['white'], sizes:['Large'],
+        type:['Tops'], audience:["Men's"], colors:['white'], sizes:['Large'],
         condition:'Used – Like new', description:'Soft cotton tee with a bold print.', images:[],
         lister:{display:'Thomas A.', username:'thomas-a', avatarUrl:avatar('Thomas A')} },
 
     { id:3, title:'Vertical Striped Shirt', price:14, forSale:true, forRent:true,
-        type:'Tops', audience:'Mens', colors:['blue'], sizes:['Medium'],
+        type:['Tops'], audience:["Men's"], colors:['blue'], sizes:['Medium'],
         condition:'Used – Good', description:'Button-down with vertical stripes.', images:[],
         lister:{display:'Cece D.', username:'cece-d', avatarUrl:avatar('Cece D')} },
 
     { id:4, title:'Sleeve Striped T-Shirt', price:9, forSale:false, forRent:true,
-        type:'Tops', audience:'Kids', colors:['red'], sizes:['XX-Small'],
+        type:['Tops'], audience:["Kids"], colors:['red'], sizes:['XX-Small'],
         condition:'Used – Fair', description:'Retro striped sleeves.', images:[],
         lister:{display:'Ally N.', username:'ally-n', avatarUrl:avatar('Ally N')} },
 
     { id:5, title:'Checkered Shirt', price:17, forSale:true, forRent:false,
-        type:'Tops', audience:'Mens', colors:['black','white'], sizes:['X-Large'],
+        type:['Tops'], audience:["Men's"], colors:['black','white'], sizes:['X-Large'],
         condition:'Brand new', description:'Classic check pattern.', images:[],
         lister:{display:'Cece D.', username:'cece-d', avatarUrl:avatar('Cece D')} },
 
     { id:6, title:'Skinny Fit Jeans', price:24, forSale:true, forRent:true,
-        type:'Bottoms', audience:'Mens', colors:['blue'], sizes:['Medium'],
+        type:['Bottoms'], audience:["Men's"], colors:['blue'], sizes:['Medium'],
         condition:'Used – Good', description:'Stretch denim jeans.', images:[],
         lister:{display:'Nancy L.', username:'nancy-l', avatarUrl:avatar('Nancy L')} },
 
     { id:7, title:'Black Striped T-Shirt', price:20, forSale:true, forRent:false,
-        type:'Tops', audience:'Kids', colors:['black'], sizes:['Small'],
+        type:['Tops'], audience:["Kids"], colors:['black'], sizes:['Small'],
         condition:'Brand new', description:'Monochrome stripe tee.', images:[],
         lister:{display:'Ally N.', username:'ally-n', avatarUrl:avatar('Ally N')} },
 
     { id:8, title:'Polo with Tipping', price:12, forSale:false, forRent:true,
-        type:'Tops', audience:'Mens', colors:['green'], sizes:['Medium'],
+        type:['Tops'], audience:["Men's"], colors:['green'], sizes:['Medium'],
         condition:'Used – Like new', description:'Smart casual polo.', images:[],
         lister:{display:'Cece D.', username:'cece-d', avatarUrl:avatar('Cece D')} },
 
     { id:9, title:'Gradient Graphic T-Shirt', price:10, forSale:true, forRent:true,
-        type:'Tops', audience:'Womens', colors:['pink'], sizes:['Large'],
+        type:['Tops'], audience:["Women's"], colors:['pink'], sizes:['Large'],
         condition:'Brand new', description:'Eye-catching gradient design.', images:[],
         lister:{display:'Thomas A.', username:'thomas-a', avatarUrl:avatar('Thomas A')} },
 
     { id:10, title:'White Mini Dress', price:35, forSale:true, forRent:true,
-        type:'Dresses', audience:'Womens', colors:['white'], sizes:['Small'],
+        type:['Dresses'], audience:["Women's"], colors:['white'], sizes:['Small'],
         condition:'Brand new', description:'Elegant white mini-dress, size S.',
         images:[
             'https://encrypted-tbn3.gstatic.com/shopping?q=tbn:ANd9GcRG0fVSiGZw4HBqX7J0baOM1qogSWeeliHJt14VP-4t9xW9P5i6CaiYRdqZaensMNXdcrPl3kQdANfNQUEo7CMJbYOFUnYUTeR2-_A4-0eE_vy-3LcAf9aplg',
@@ -496,7 +496,7 @@ const ExplorePage: React.FC = () => {
 
     /* filter options */
     const typeOptions    = ['Tops','Bottoms','Outerwear','Dresses','Shoes','Accessories'];
-    const genderOptions  = ["Men's","Women's",'Kids'];
+    const genderOptions  = ["Men's","Women's","Kids"];
     const categoryOptions= ['For Rent','For Sale'];
     const conditionOpts  = ['Brand new','Used – Like new','Used – Good','Used – Fair'];
     const sizeOptions    = ['XX-Small','X-Small','Small','Medium','Large','X-Large','XX-Large','3X-Large','4X-Large'];
@@ -610,8 +610,8 @@ const ExplorePage: React.FC = () => {
 
     /* filter logic */
     const filtered = useMemo(()=> explorePageItems.filter((p) => {
-        if(selTypes.length   && (!p.type || !selTypes.includes(p.type))) return false;
-        if(selGender.length  && (!p.audience || !selGender.includes(p.audience))) return false;
+        if (selTypes.length && (!p.type || !p.type.some((c) => selTypes.includes(c)))) return false;
+        if (selGender.length && (!p.audience || !p.audience.some((c) => selGender.includes(c)))) return false;
 
         if(selCats.length){
             const rentMatch = selCats.includes('For Rent') && p.forRent;
