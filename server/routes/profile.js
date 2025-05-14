@@ -97,7 +97,7 @@ module.exports = (db) => {
         const { email } = req.query;
         const queryTransaction = `SELECT transaction_id FROM Transactions WHERE email = ? AND status = 'pending'`;
         const queryCart = `SELECT post_id FROM Transaction_Listing WHERE transaction_id = ?`
-        const queryPosts = `SELECT title, price FROM Post WHERE post_id = ?`
+        const queryPosts = `SELECT title, price, bflag, sflag, item_condition, size FROM Post WHERE post_id = ?`
         const queryPostImage = `SELECT image_url FROM Post_Image WHERE post_id = ?`
 
         db.get(queryTransaction, [email], (err, transaction) => {

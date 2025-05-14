@@ -18,6 +18,7 @@ interface Product {
     title     : string;
     price     : number;
     images    : string[];          // empty ⇒ gray placeholder
+    isRented?: boolean;
 }
 
 /* ============================================
@@ -142,16 +143,14 @@ const CartPage: React.FC = () => {
     const { user }        = useUser();
     const [cartTransactionId, setCartTransactionId] = useState(-1);
     const [cartItems, setCartItems] = useState<Product[]>([]);
-    const [totalPrice, setTotalPrice] = useState(0);
-    const taxAmount = totalPrice * 0.093;
-    const grandTotal = totalPrice + taxAmount;
+    const soldItems = cartItems.filter(item => !item.isRented);
+    const subtotal = soldItems.reduce((sum, item) => sum + item.price, 0);
+    const taxAmount = subtotal * 0.093;
+    const shippingCost = subtotal >= 80 ? 0 : 5.99;
+    const grandTotal = subtotal + taxAmount + shippingCost;
+
 
     // Calculate total price
-    // const totalPrice = cartItems.reduce((total, item) => total + item.price, 0);
-    useEffect(() => {
-        const newTotalPrice = cartItems.reduce((total, item) => total + item.price, 0);
-        setTotalPrice(newTotalPrice);
-    }, [cartItems]);
 
     // Handle item removal
     const handleRemoveItem = async (id: number) => {
@@ -162,8 +161,8 @@ const CartPage: React.FC = () => {
                     "Content-Type": "application/json",
                 },
                 body: JSON.stringify({
-                    transactionId: cartTransactionId,  // idk if this handling is okay
-                    postId: id,         // id of item to remove
+                    transactionId: cartTransactionId, 
+                    postId: id,  // id of item to remove
                 }),
             });
 
@@ -227,6 +226,7 @@ const CartPage: React.FC = () => {
             .then((response) => response.json())
             .then((data) => {
                 console.log('Fetched posts: ', data);
+                console.log("RAW CART DATA:", data.cart);
 
                 if (!Array.isArray(data.cart)) {
                     console.error("Invalid data format:", data);
@@ -239,6 +239,7 @@ const CartPage: React.FC = () => {
                     title: post.title,
                     price: post.price ?? 20, // Default price if not provided
                     images: post.images, // Use the images array directly
+                    isRented: post.bflag === 1 && post.sflag === 0,
                 }));
                 setCartItems(transformed);
                 setCartTransactionId(data.transId);
@@ -288,8 +289,17 @@ const CartPage: React.FC = () => {
                                         )}
                                     </div>
                                     <div className="flex-1">
-                                        <h2 className="text-lg font-medium" style={{ color: brandBrown }}>{item.title}</h2>
-                                        <p className="text-gray-600">${item.price.toFixed(2)}</p>
+                                    <h2 className="text-lg font-medium" style={{ color: brandBrown }}>
+                                        {item.title}
+                                        {item.isRented && (<span className="text-lg font-medium" style={{ color: brandBrown }}>{" "}
+                                            - Request to Rent
+                                        </span>
+                                        )}
+                                    </h2>
+                                    <p className="text-gray-600">
+                                        ${item.price.toFixed(2)}
+                                        {item.isRented && <span> Per Day</span>}
+                                    </p>
                                     </div>
                                     <button
                                         onClick={() => handleRemoveItem(item.id)}
@@ -306,7 +316,7 @@ const CartPage: React.FC = () => {
                             <h2 className="text-lg font-medium mb-4" style={{ color: brandBrown }}>Order Summary</h2>
                             <div className="flex justify-between mb-2" style={{ color: brandBrown }}>
                                 <span>Subtotal</span>
-                                <span>${totalPrice.toFixed(2)}</span>
+                                <span>${subtotal.toFixed(2)}</span>
                             </div>
                             <div className="flex justify-between mb-2" style={{ color: brandBrown }}>
                                 <span>Tax</span>
@@ -314,8 +324,13 @@ const CartPage: React.FC = () => {
                             </div>
                             <div className="flex justify-between mb-4" style={{ color: brandBrown }}>
                                 <span>Shipping</span>
-                                <span>Free</span>
+                                <span>{subtotal >= 80 ? 'Free' : `$${shippingCost.toFixed(2)}`}</span>
                             </div>
+                            {subtotal < 80 && (
+                                <div className="text-sm mb-2" style={{ color: 'rgba(brandBrownRGB, 0.7)' }}>
+                                    ${(80 - subtotal).toFixed(2)} more to qualify for free shipping
+                                </div>
+                            )}
                             <hr className="my-4" />
                             <div className="flex justify-between font-semibold text-lg" style={{ color: brandBrown }}>
                                 <span>Total</span>
