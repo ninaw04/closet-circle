@@ -21,18 +21,9 @@ interface Product {
 const SellerHistoryPage: React.FC = () => {
     const { user } = useUser();
 
-    const [tab, setTab] = useState<'Sold' | 'Borrowed' | 'Pending'>('Sold');
-    const [pageMap, setPageMap] = useState({ Sold: 1, Borrowed: 1, Pending: 1 });
+    const [tab, setTab] = useState<'Sold' | 'Borrowed'>('Sold');
+    const [pageMap, setPageMap] = useState({ Sold: 1, Borrowed: 1});
     const listRef = useRef<HTMLDivElement | null>(null);
-
-    const pendingItems = Array.from({ length: 8 }, (_, i) => ({
-        id: 100 + i,
-        title: `Requested Item ${i + 1}`,
-        price: 20 + i * 5,
-        images: ['https://via.placeholder.com/80'],
-        requestDate: '2025-05-10',
-        requesterEmail: `user${i + 1}@email.com`,
-    }));
 
     const [soldItems, setSoldOrders] = useState<Product[]>([]); // items for sale
     const [borrowedItems, setBorrowedOrders] = useState<Product[]>([]); // items for rent
@@ -71,7 +62,7 @@ const SellerHistoryPage: React.FC = () => {
                 .catch((error) => console.log('Error fetching cart items: ', error));
         }, [user]);
 
-    const items = tab === 'Sold' ? soldItems : tab === 'Borrowed' ? borrowedItems : pendingItems;
+    const items = tab === 'Sold' ? soldItems : borrowedItems;
     const currentPage = pageMap[tab];
     const totalPages = Math.ceil(items.length / ITEMS_PER_PAGE);
     const pagedItems = items.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
@@ -99,15 +90,9 @@ const SellerHistoryPage: React.FC = () => {
                 <p className="text-gray-600">${item.price.toFixed(2)}</p>
                 {tab === 'Sold' && <p className="text-sm text-gray-500">Sold on: {item.date}</p>}
                 {tab === 'Borrowed' && <p className="text-sm text-gray-500">Borrowed on: {item.date}</p>}
-                {tab === 'Pending' && (
-                    <p className="text-sm text-gray-500">{item.requesterEmail} requested this item for {item.requestDate}</p>
-                )}
+
             </div>
-            {tab === 'Pending' && (
-                <button className="px-3 py-1 text-sm rounded bg-green-600 text-white hover:bg-green-700">
-                    Approve
-                </button>
-            )}
+
         </div>
     );
 
@@ -150,7 +135,7 @@ const SellerHistoryPage: React.FC = () => {
 
                         {/* Tabs */}
                         <div className="flex gap-4 mb-6">
-                            {(['Sold', 'Borrowed', 'Pending'] as const).map((label) => (
+                            {(['Sold', 'Borrowed'] as const).map((label) => (
                                 <button
                                     key={label}
                                     onClick={() => setTab(label)}
