@@ -365,22 +365,6 @@ const ProductCard: React.FC<{ image: string; title: string; buyPrice: string }> 
 );
 
 const TrendingItems: React.FC<{ products: Product[] }> = ({ products }) => {
-    // const products = [
-    //     {
-    //         id: 1,
-    //         image: 'https://cdn.builder.io/api/v1/image/assets/TEMP/a597e91d65960d1b00fc109a2fefe3b003a97311',
-    //         title: 'Gradient Graphic T-shirt',
-    //         buyPrice: '$10',
-    //     },
-    // ];
-    
-    // <ProductCard
-    //     key={product.id}
-    //     image={product.images?.[0] ?? '/placeholder.jpg'}
-    //     title={product.title}
-    //     buyPrice={`$${product.price}`}
-    // />
-
     return (
         <section className="mb-10 text-center px-4">
             <h2 className="mb-8 text-3xl md:text-4xl font-semibold text-black">Trending Items</h2>
@@ -394,9 +378,11 @@ const TrendingItems: React.FC<{ products: Product[] }> = ({ products }) => {
                 />
                 ))}
             </div>
-            <button className="px-10 py-3 mt-8 text-sm md:text-base font-medium text-black border border-black border-opacity-10 rounded-full">
+            <Link 
+                href="/explore"
+                className="px-10 py-3 mt-8 text-sm md:text-base font-medium text-black border border-black border-opacity-10 rounded-full text-center">
                 View All
-            </button>
+            </Link>
         </section>
     );
 };
