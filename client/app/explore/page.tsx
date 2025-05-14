@@ -299,7 +299,7 @@ const ProductCard: React.FC<ProductCardProps> = ({product, initialFav = false, s
                 )
             );
 
-            alert(`Item added to cart  successfully!`);
+            alert(`Item added to cart successfully!`);
         } catch (error) {
             console.error(`Error adding item to cart (${type}):`, error);
             alert("An error occured. Please try again.");
@@ -518,7 +518,7 @@ const Footer: React.FC = () => (
     const categoryOptions= ['For Rent','For Sale'];
     const conditionOpts  = ['Brand new','Used – Like new','Used – Good','Used – Fair'];
     const sizeOptions    = ['XX-Small','X-Small','Small','Medium','Large','X-Large','XX-Large','3X-Large','4X-Large'];
-    const colorOptions   = ['black','white','red','blue','green','pink'];
+    const colorOptions   = ['Black','White','Red','Blue','Green','Pink'];
 
     // map UI labels to db values
     const audienceMap = [
