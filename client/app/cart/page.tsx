@@ -143,6 +143,8 @@ const CartPage: React.FC = () => {
     const [cartTransactionId, setCartTransactionId] = useState(-1);
     const [cartItems, setCartItems] = useState<Product[]>([]);
     const [totalPrice, setTotalPrice] = useState(0);
+    const taxAmount = totalPrice * 0.093;
+    const grandTotal = totalPrice + taxAmount;
 
     // Calculate total price
     // const totalPrice = cartItems.reduce((total, item) => total + item.price, 0);
@@ -271,17 +273,14 @@ const CartPage: React.FC = () => {
                                     key={item.id}
                                     className="flex items-center gap-4 border p-4 rounded"
                                 >
-                                    {/* displaying multiple images as a carousel */}
+                                    {/* display first image only*/}
                                     <div className="flex gap-2" style={{ color: brandBrown }}>
-                                        {item.images.length > 0 ? (
-                                            item.images.map((image, index) => (
-                                                <img
-                                                    key={index}
-                                                    src={image}
-                                                    alt={`${item.title} - Image ${index + 1}`}
-                                                    className="w-20 h-20 object-cover rounded"
-                                                />
-                                            ))
+                                        {item.images && item.images.length > 0 ? (
+                                            <img
+                                                src={item.images[0]}
+                                                alt={`${item.title} - Image 1`}
+                                                className="w-20 h-20 object-cover rounded"
+                                            />
                                         ) : (
                                             <div className="w-20 h-20 bg-gray-200 flex items-center justify-center rounded">
                                                 <span className="text-gray-500 text-sm">No Image</span>
@@ -309,6 +308,10 @@ const CartPage: React.FC = () => {
                                 <span>Subtotal</span>
                                 <span>${totalPrice.toFixed(2)}</span>
                             </div>
+                            <div className="flex justify-between mb-2" style={{ color: brandBrown }}>
+                                <span>Tax</span>
+                                <span>${taxAmount.toFixed(2)}</span>
+                            </div>
                             <div className="flex justify-between mb-4" style={{ color: brandBrown }}>
                                 <span>Shipping</span>
                                 <span>Free</span>
@@ -316,7 +319,7 @@ const CartPage: React.FC = () => {
                             <hr className="my-4" />
                             <div className="flex justify-between font-semibold text-lg" style={{ color: brandBrown }}>
                                 <span>Total</span>
-                                <span>${totalPrice.toFixed(2)}</span>
+                                <span>${grandTotal.toFixed(2)}</span>
                             </div>
                             <button
                                 className="mt-6 w-full px-4 py-2 text-white font-medium bg-blue-600 rounded"
