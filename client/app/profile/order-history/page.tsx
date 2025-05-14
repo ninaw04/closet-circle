@@ -1,28 +1,76 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Header, Footer, type Product, PRODUCTS } from '../../explore/page';
+import { Header, Footer, PRODUCTS } from '../../explore/page';
+import { useUser } from '@auth0/nextjs-auth0/client';
 
 const brandNavy = '#284472';
 const brandBrown = '#675a5e';
 const ITEMS_PER_PAGE = 6;
 
+interface Product {
+    id        : number;
+    title     : string;
+    price     : number;
+    images    : string[];
+    date      : string;
+    purchased : boolean;
+    borrowed  : boolean;
+}
+
 const OrderHistoryPage: React.FC = () => {
+    const { user } = useUser();
+
     const [tab, setTab] = useState<'Purchased' | 'Requested'>('Purchased');
     const [purchasedPage, setPurchasedPage] = useState(1);
     const [requestedPage, setRequestedPage] = useState(1);
     const listRef = useRef<HTMLDivElement | null>(null);
 
-    const placeholderPurchased: Product[] = Array(12).fill(0).map((_, i) => ({
-        ...PRODUCTS[i % PRODUCTS.length],
-        id: i + 1,
-    }));
+    const [purchasedOrders, setPurchasedOrders] = useState<Product[]>([]); // items for sale
+    const [requestedOrders, setRequestedOrders] = useState<Product[]>([]); // items for rent
 
-    const placeholderRequested: (Product & { status: 'Pending' | 'Approved' })[] = Array(10).fill(0).map((_, i) => ({
-        ...PRODUCTS[(i + 2) % PRODUCTS.length],
-        id: 100 + i,
-        status: i % 2 === 0 ? 'Pending' : 'Approved',
-    }));
+    /* Fetch all ordered items */
+    useEffect(() => {
+        if (!user) return;
+            
+        fetch(`http://localhost:8800/api/profile/order-history/purchased?email=${user.email}`)
+        // fetch(`http://localhost:8800/api/profile/order-history/purchased?email=user2@email.com`) // for testing purposes
+            .then((response) => response.json())
+            .then((data) => {
+                console.log('Fetched posts: ', data);
+    
+                if (!Array.isArray(data.orders)) {
+                    console.error("Invalid data format:", data);
+                    setPurchasedOrders([]);
+                    return;
+                }
+    
+                const transformed: Product[] = data.orders.map((post: any) => ({
+                    id: post.post_id,
+                    title: post.title,
+                    price: post.price ?? 20, // Default price if not provided
+                    images: post.images, // Use the images array directly
+                    date: post.purchased_date.substring(0, post.purchased_date.indexOf(' ')), // date format yyy-mm-dd (doesnt display timestamp)
+                    purchased: post.sflag === 1,
+                    borrowed:  post.bflag === 1
+                }));
+                
+                const purchasedItems = transformed.filter(item => item.purchased == true);
+                const borrowedItems = transformed.filter(item => item.borrowed == true && item.purchased == false);
+                setPurchasedOrders(purchasedItems);
+                setRequestedOrders(borrowedItems);
+                //setPurchasedOrders(transformed);
+            })
+            .catch((error) => console.log('Error fetching cart items: ', error));
+    }, [user]);
+    
+
+    // const placeholderRequested: (Product & { status: 'Pending' | 'Approved' })[] = Array(10).fill(0).map((_, i) => ({
+    //     ...PRODUCTS[(i + 2) % PRODUCTS.length],
+    //     id: 100 + i,
+    //     status: i % 2 === 0 ? 'Pending' : 'Approved',
+    //     date: "2025-4-22"
+    // }));
 
     const paginate = <T,>(items: T[], page: number) => {
         const start = (page - 1) * ITEMS_PER_PAGE;
@@ -58,7 +106,7 @@ const OrderHistoryPage: React.FC = () => {
                     {item.title}
                 </h2>
                 <p className="text-gray-600">${item.price.toFixed(2)}</p>
-                <p className="text-sm text-gray-500">Ordered on: 2025-04-22</p>
+                <p className="text-sm text-gray-500">Ordered on: {item.date}</p>
             </div>
             {item.status && (
                 <span
@@ -74,7 +122,8 @@ const OrderHistoryPage: React.FC = () => {
         </div>
     );
 
-    const tabItems = tab === 'Purchased' ? placeholderPurchased : placeholderRequested;
+    // const tabItems = tab === 'Purchased' ? placeholderPurchased : placeholderRequested;
+    const tabItems = tab === 'Purchased' ? purchasedOrders : requestedOrders;
     const currentPage = tab === 'Purchased' ? purchasedPage : requestedPage;
     const pageCount = Math.ceil(tabItems.length / ITEMS_PER_PAGE);
     const pagedItems = paginate(tabItems, currentPage);
