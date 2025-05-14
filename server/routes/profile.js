@@ -390,6 +390,91 @@ module.exports = (db) => {
             })
         })
 
+    // get seller transaction history
+    router.get("/seller-history", (req, res) => {
+        const { email } = req.query;
+        const queryTransaction = `SELECT transaction_id, purchased_date FROM Transactions WHERE status = 'purchased'`;
+        const queryListings = `SELECT post_id FROM Transaction_Listing WHERE transaction_id = ?`
+        const queryPosts = `SELECT title, price, sflag, bflag FROM Post WHERE post_id = ? AND owner_id = ?`
+        const queryPostImage = `SELECT image_url FROM Post_Image WHERE post_id = ?`
+
+        db.all(queryTransaction, [], (err, transactions) => {
+            if (err) {
+                console.log("err in query listings");
+                console.error(err.message);
+                res.status(500).json({ error: err.message });
+                return;
+            }
+
+            if (!transactions) {
+                // no purchased transactions found
+                res.json({ orders: [] });
+                return;
+            }
+
+            // find all listings for all found transactions for this user
+            const transactionPromises = transactions.map((transaction) => {
+                return new Promise((resolve, reject) => {
+                    // Find all listings in the transaction
+                    db.all(queryListings, [transaction.transaction_id], (err, listingItems) => {
+                        if (err) {
+                            console.error(err.message);
+                            console.log("err in query listings");
+                            res.status(500).json({ error: err.message });
+                            return;
+                        }
+
+                        // Fetch details for each post in the cart
+                        const orderDetailsPromises = listingItems.map((item) => {
+                            return new Promise((resolve, reject) => {
+                                db.get(queryPosts, [item.post_id, email], (err, post) => {
+                                    if (err) {
+                                        console.log("err in query posts");
+                                        reject(err);
+                                        return;
+                                    }
+
+                                    if (!post) {
+                                        resolve(null);
+                                        return;
+                                    }
+
+                                    // Fetch post images
+                                    db.all(queryPostImage, [item.post_id], (err, images) => {
+                                        if (err) {
+                                            console.log("err in query images");
+                                            reject(err);
+                                            return;
+                                        }
+
+                                        post.images = images.map((img) => img.image_url);
+                                        resolve({ ...post, post_id: item.post_id, purchased_date: transaction.purchased_date });
+                                    });
+                                });
+                            });
+                        });
+
+                        Promise.all(orderDetailsPromises)
+                            // Filer out any null results
+                            .then(results => resolve(results.filter(r => r !== null)))
+                            .catch(reject);
+                    });
+                });
+            });
+
+            // Resolve all promises and return order details
+            Promise.all(transactionPromises)
+                .then((orderDetails) => {
+                    const flattenedOrders = orderDetails.flat();
+                    res.json( { orders: flattenedOrders});
+                })
+                .catch((error) => {
+                    console.error(error.message);
+                    res.status(500).json({ error: error.message });
+                })
+            })
+        })
+
 
         // GET wishlist/favorite items
         router.get("/wishlist", (req, res) => {

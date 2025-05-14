@@ -1,18 +1,30 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Header, Footer, type Product, PRODUCTS } from '../../explore/page';
+import { Header, Footer} from '../../explore/page';
+import { useUser } from '@auth0/nextjs-auth0/client';
 
 const brandNavy = '#284472';
 const brandBrown = '#675a5e';
 const ITEMS_PER_PAGE = 6;
 
+interface Product {
+    id        : number;
+    title     : string;
+    price     : number;
+    images    : string[];
+    date      : string;
+    purchased : boolean;
+    borrowed  : boolean;
+}
+
 const SellerHistoryPage: React.FC = () => {
+    const { user } = useUser();
+
     const [tab, setTab] = useState<'Sold' | 'Borrowed' | 'Pending'>('Sold');
     const [pageMap, setPageMap] = useState({ Sold: 1, Borrowed: 1, Pending: 1 });
     const listRef = useRef<HTMLDivElement | null>(null);
 
-    const soldItems = PRODUCTS.slice(0, 10).map((p, i) => ({ ...p, id: i + 1, soldDate: '2025-05-01' }));
     const pendingItems = Array.from({ length: 8 }, (_, i) => ({
         id: 100 + i,
         title: `Requested Item ${i + 1}`,
@@ -21,13 +33,43 @@ const SellerHistoryPage: React.FC = () => {
         requestDate: '2025-05-10',
         requesterEmail: `user${i + 1}@email.com`,
     }));
-    const borrowedItems = Array.from({ length: 9 }, (_, i) => ({
-        id: 200 + i,
-        title: `Borrowed Item ${i + 1}`,
-        price: 15 + i * 5,
-        images: ['https://via.placeholder.com/80'],
-        borrowDate: '2025-04-25',
-    }));
+
+    const [soldItems, setSoldOrders] = useState<Product[]>([]); // items for sale
+    const [borrowedItems, setBorrowedOrders] = useState<Product[]>([]); // items for rent
+    
+        /* Fetch all ordered items */
+        useEffect(() => {
+            if (!user) return;
+                
+            fetch(`http://localhost:8800/api/profile/seller-history?email=${user.email}`)
+                .then((response) => response.json())
+                .then((data) => {
+                    console.log('Fetched posts: ', data);
+        
+                    if (!Array.isArray(data.orders)) {
+                        console.error("Invalid data format:", data);
+                        setSoldOrders([]);
+                        return;
+                    }
+        
+                    const transformed: Product[] = data.orders.map((post: any) => ({
+                        id: post.post_id,
+                        title: post.title,
+                        price: post.price ?? 20, // Default price if not provided
+                        images: post.images, // Use the images array directly
+                        date: post.purchased_date.substring(0, post.purchased_date.indexOf(' ')), // date format yyy-mm-dd (doesnt display timestamp)
+                        purchased: post.sflag === 1,
+                        borrowed:  post.bflag === 1
+                    }));
+                    
+                    const purchasedItems = transformed.filter(item => item.purchased == true);
+                    const borrowedItems = transformed.filter(item => item.borrowed == true && item.purchased == false);
+                    setSoldOrders(purchasedItems);
+                    setBorrowedOrders(borrowedItems);
+                    //setPurchasedOrders(transformed);
+                })
+                .catch((error) => console.log('Error fetching cart items: ', error));
+        }, [user]);
 
     const items = tab === 'Sold' ? soldItems : tab === 'Borrowed' ? borrowedItems : pendingItems;
     const currentPage = pageMap[tab];
@@ -55,8 +97,8 @@ const SellerHistoryPage: React.FC = () => {
             <div className="flex-1">
                 <h2 className="text-lg font-medium" style={{ color: brandBrown }}>{item.title}</h2>
                 <p className="text-gray-600">${item.price.toFixed(2)}</p>
-                {tab === 'Sold' && <p className="text-sm text-gray-500">Sold on: {item.soldDate}</p>}
-                {tab === 'Borrowed' && <p className="text-sm text-gray-500">Borrowed on: {item.borrowDate}</p>}
+                {tab === 'Sold' && <p className="text-sm text-gray-500">Sold on: {item.date}</p>}
+                {tab === 'Borrowed' && <p className="text-sm text-gray-500">Borrowed on: {item.date}</p>}
                 {tab === 'Pending' && (
                     <p className="text-sm text-gray-500">{item.requesterEmail} requested this item for {item.requestDate}</p>
                 )}
