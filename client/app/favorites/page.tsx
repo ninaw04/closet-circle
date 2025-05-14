@@ -1,12 +1,23 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useUser } from '@auth0/nextjs-auth0/client';
 import {
     Header,
     ProductCard,
     Footer,
     Product,
+    getUIType,
+    getUIAudience,
+    getUIColors,
+    getUICondition,
+    avatar,
+    audienceMap,
+    typesMap,
+    colorsMap,
+    dbConditionVals
 } from '../explore/page';
+
 
 /* ============================================
    BRAND COLORS
@@ -18,33 +29,82 @@ const brandLightBrown = "#efe4e1";
 const brandBrown = "#675a5e";
 
 const FavoritesPage: React.FC = () => {
-    // sample placeholder product to test UI (delete after backend implementation)
-    const sampleProduct: Product = {
-        id: 999,
-        title: 'Sample Placeholder Item',
-        price: 0,
-        forSale: false,
-        forRent: false,
-        type: 'Accessories',
-        audience: 'Womens',
-        colors: [],
-        sizes: [],
-        condition: 'Brand new',
-        description: 'This is a placeholder to preview the Favorites UI.',
-        images: [],
-        lister: {
-            display: 'Demo User',
-            username: 'demo-user',
-            avatarUrl: 'https://via.placeholder.com/32',
-        },
+    const { user } = useUser();
+    const [favoriteItems, setFavoriteItems] = useState<Product[]>([]);
+
+// Fetch wishlist items
+useEffect(() => {
+    if (!user) return;
+
+    const fetchWishlistItems = async () => {
+        try {
+            const response = await fetch(`http://localhost:8800/api/profile/wishlist?email=${user.email}`);
+            const data = await response.json();
+
+            if (response.ok) {
+                if (!Array.isArray(data.wishlist)) {
+                    console.error('Invalid data format:', data);
+                    setFavoriteItems([]);
+                    return;
+                }
+                console.log(data.wishlist);
+                setFavoriteItems(
+                  data.wishlist.map((item: any) => ({
+                    id: item.post_id,
+                    title: item.title,
+                    price: item.price ?? 20,
+                    forSale: item.sflag === 1,
+                    forRent: item.bflag === 1,
+                    type: item.categories ? getUIType(item.categories) : [],
+                    audience: item.categories ? getUIAudience(item.categories) : [],
+                    colors: item.categories ? getUIColors(item.categories) : [],
+                    sizes: item.size ? [item.size] : [],
+                    condition: getUICondition(item.item_condition),
+                    description: item.description ?? '',
+                    images: item.images ?? [], 
+                    lister: {
+                      display: item.first_name && item.last_name
+                        ? `${item.first_name} ${item.last_name[0]}.`
+                        : 'Unknown',
+                      username: item.username ?? 'unknown-user',
+                      avatarUrl: item.avatarUrl ?? avatar(item.first_name ?? 'Unknown'),
+                    },
+                  }))
+                );
+            } else {
+                console.error('Failed to fetch wishlist:', data.error);
+                setFavoriteItems([]);
+            }
+        } catch (error) {
+            console.error('Error fetching wishlist:', error);
+            setFavoriteItems([]);
+        }
     };
+    fetchWishlistItems();
+}, [user]);
 
-    const [favoriteItems, setFavoriteItems] = useState<Product[]>([
-        sampleProduct,
-    ]);
 
-    const handleRemove = (id: number) =>
-        setFavoriteItems((prev) => prev.filter((p) => p.id !== id));
+
+// Remove item from wishlist
+const handleRemove = async (id: number) => {
+    if (!user) return;
+    try {
+        const response = await fetch('http://localhost:8800/api/profile/wishlist', {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: user.email, post_id: id }),
+        });
+        const data = await response.json();
+
+        if (response.ok) {
+            setFavoriteItems((prev) => prev.filter((p) => p.id !== id));
+        } else {
+            console.error('Failed to remove from wishlist:', data.error);
+        }
+    } catch (error) {
+        console.error('Error removing from wishlist:', error);
+    }
+}
 
     return (
         <div className="min-h-screen flex flex-col bg-white">
@@ -59,7 +119,8 @@ const FavoritesPage: React.FC = () => {
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                         {favoriteItems.map((p) => (
                             <div key={p.id} className="space-y-2">
-                                <ProductCard product={p} initialFav />
+                                <ProductCard product={p} initialFav setExplorePageItems={() => {}} userEmail={user?.email} />
+
                                 <button
                                     onClick={() => handleRemove(p.id)}
                                     className="hover:underline text-sm" style={{ color: brandBrown }}

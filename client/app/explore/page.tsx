@@ -238,9 +238,10 @@ interface ProductCardProps {
     /** start filled if true */
     initialFav?: boolean;
     setExplorePageItems: React.Dispatch<React.SetStateAction<Product[]>>;
+    userEmail?: string | null;
 }
 
-const ProductCard: React.FC<ProductCardProps> = ({product, initialFav = false, setExplorePageItems}) => {
+const ProductCard: React.FC<ProductCardProps> = ({product, initialFav = false, setExplorePageItems, userEmail}) => {
     const { user } = useUser();  
     const router = useRouter(); 
     const [fav, setFav] = useState(initialFav);
@@ -314,7 +315,7 @@ const ProductCard: React.FC<ProductCardProps> = ({product, initialFav = false, s
         return () => document.removeEventListener('mousedown', h);
     }, [open]);
 
-    const imgs      = product.images;
+    const imgs      = product.images ?? [];
     const imgCount  = imgs.length;
     const nextImg   = () => setI((i+1)%imgCount);
     const prevImg   = () => setI((i-1+imgCount)%imgCount);
@@ -331,7 +332,25 @@ const ProductCard: React.FC<ProductCardProps> = ({product, initialFav = false, s
             </Link>
 
             {/* favourite heart */}
-            <button onClick={()=>setFav(!fav)}
+            <button onClick={async () => {
+                        if (fav) { // Remove from wishlist
+                            const response = await fetch('http://localhost:8800/api/profile/wishlist', {
+                                method: 'DELETE',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ email: userEmail, post_id: product.id }),
+                            });
+                            if (response.ok) setFav(false);
+                            else alert("Failed to remove from wishlist.");
+                        } else {  // Add to wishlist
+                            const response = await fetch('http://localhost:8800/api/profile/wishlist', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ name: "Favorites", email: userEmail, post_id: product.id }),
+                            });
+                            if (response.ok) setFav(true);
+                            else alert("Failed to add to wishlist.");
+                        }
+                    }}
                     className="absolute top-2 right-2 z-[55] w-8 h-8 rounded-full bg-white
                          flex items-center justify-center"
                     style={{ color: brandNavy }}>
@@ -492,20 +511,6 @@ const Footer: React.FC = () => (
 /* ============================================
    EXPLORE PAGE
 ============================================ */
-const ExplorePage: React.FC = () => {
-    /* state */
-    const [explorePageItems, setExplorePageItems] = useState<Product[]>([]);
-
-    const [selTypes,  setTypes]  = useState<string[]>([]);
-    const [selCats,   setCats]   = useState<string[]>([]);
-    const [selConds,  setConds]  = useState<string[]>([]);
-    const [selSizes,  setSizes]  = useState<string[]>([]);
-    const [selColors, setColors] = useState<string[]>([]);
-    const [selGender, setGender] = useState<string[]>([]);
-    const [price,     setPrice]  = useState<[number,number]>([0,50]);
-    const [sort,      setSort]   = useState('Most Popular');
-    const [page,      setPage]   = useState(1);
-    const perPage = 9;
 
     /* filter options */
     const typeOptions    = ['Tops','Bottoms','Outerwear','Dresses','Shoes','Accessories'];
@@ -568,9 +573,44 @@ const ExplorePage: React.FC = () => {
         return matchedCondition?.label;
     }
 
+const ExplorePage: React.FC = () => {
+    /* state */
+    const [explorePageItems, setExplorePageItems] = useState<Product[]>([]);
+    const { user } = useUser();
+    const [wishlistIds, setWishlistIds] = useState<number[]>([]);
+    
+    const [selTypes,  setTypes]  = useState<string[]>([]);
+    const [selCats,   setCats]   = useState<string[]>([]);
+    const [selConds,  setConds]  = useState<string[]>([]);
+    const [selSizes,  setSizes]  = useState<string[]>([]);
+    const [selColors, setColors] = useState<string[]>([]);
+    const [selGender, setGender] = useState<string[]>([]);
+    const [price,     setPrice]  = useState<[number,number]>([0,50]);
+    const [sort,      setSort]   = useState('Most Popular');
+    const [page,      setPage]   = useState(1);
+    const perPage = 9;
+
+    // Fetch wishlist items for user
+    useEffect(() => {
+        if (!user) return;
+        fetch(`http://localhost:8800/api/profile/wishlist?email=${user.email}`)
+            .then(res => res.json())
+            .then(data => {
+                if (Array.isArray(data.wishlist)) {
+                    setWishlistIds(data.wishlist.map((item: any) => item.post_id));
+                } else {
+                    setWishlistIds([]);
+                }
+            })
+            .catch(err => {
+                console.error("Failed to fetch wishlist:", err);
+                setWishlistIds([]);
+            });
+    }, [user]);
+
     // Fetch products from backend
     useEffect(() => {
-        console.log("in use effecg")
+        console.log("in use effect")
         fetch('http://localhost:8800/api/posts-all')
             .then((response) => {
                 console.log("Response status: ", response.status);
@@ -749,7 +789,7 @@ const ExplorePage: React.FC = () => {
                     <h2 className="text-2xl font-semibold mb-4">Shop Products</h2>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {items.map(p=><ProductCard key={p.id} product={p} setExplorePageItems={setExplorePageItems}/>)}
+                        {items.map(p=><ProductCard key={p.id} product={p} setExplorePageItems={setExplorePageItems} initialFav={wishlistIds.includes(p.id)} userEmail={user?.email} />)}
                     </div>
 
                     {/* pagination */}
@@ -778,4 +818,13 @@ export {
     Footer,
     type Product,
     PRODUCTS,
+    getUIType,
+    getUIAudience, 
+    getUIColors, 
+    getUICondition, 
+    avatar,
+    audienceMap, 
+    typesMap, 
+    colorsMap, 
+    dbConditionVals
 };

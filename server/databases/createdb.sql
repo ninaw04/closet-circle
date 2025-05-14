@@ -1,6 +1,7 @@
+
 CREATE TABLE "User"(
 	email VARCHAR(60) PRIMARY KEY,
-first_name VARCHAR(40),
+	first_name VARCHAR(40),
 	last_name VARCHAR(40),
 	join_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
 	bio VARCHAR(350)
@@ -53,9 +54,9 @@ CREATE TABLE Post(
 	date_posted TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
 	item_condition VARCHAR(70) NOT NULL,
 	size VARCHAR(25) NOT NULL,
-price REAL,
- bflag INTEGER DEFAULT 0,
-    	sflag INTEGER DEFAULT 0,
+	price REAL,
+ 	bflag INTEGER DEFAULT 0,
+    sflag INTEGER DEFAULT 0,
    	 rental_end_date DATE,
 	FOREIGN KEY (closet_id) REFERENCES Closet(closet_id) ON DELETE CASCADE,	
 	FOREIGN KEY (owner_id) REFERENCES User(email) ON DELETE CASCADE
@@ -65,6 +66,14 @@ CREATE TABLE Post_Image (
 	image_id INTEGER PRIMARY KEY AUTOINCREMENT,
 	post_id INTEGER NOT NULL,
 	image_url VARCHAR(500) NOT NULL,
+	FOREIGN KEY (post_id) REFERENCES Post(post_id) ON DELETE CASCADE
+);
+
+CREATE TABLE Wishlist(
+	email VARCHAR(60),
+	post_id INTEGER, 
+	PRIMARY KEY (email, post_id),
+	FOREIGN KEY (email) REFERENCES User(email) ON DELETE CASCADE,
 	FOREIGN KEY (post_id) REFERENCES Post(post_id) ON DELETE CASCADE
 );
 
@@ -342,3 +351,18 @@ INSERT INTO Transaction_Listing (transaction_id, post_id) VALUES
 (7, 13),  
 (8, 14),  
 (8, 15);
+
+INSERT INTO Wishlist (email, post_id) VALUES
+('user1@email.com', 2),
+('user1@email.com', 1),
+('user1@email.com', 5),
+('user2@email.com', 3),
+('user2@email.com', 10),
+('user3@email.com', 12),
+('user2@email.com', 4),
+('user4@email.com', 15),
+('user4@email.com', 14),
+('user5@email.com', 5),
+('user5@email.com', 15),
+('user6@email.com', 6),
+('user7@email.com', 7);

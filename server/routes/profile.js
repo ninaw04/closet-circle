@@ -391,5 +391,86 @@ module.exports = (db) => {
         })
 
 
+        // GET wishlist/favorite items
+        router.get("/wishlist", (req, res) => {
+            console.log("getting wishlist");
+            const { email } = req.query;
+            const queryWishlist = `SELECT W.*, P.*, U.first_name, U.last_name
+                                   FROM Wishlist W, Post P, User U
+                                   WHERE W.post_id = P.post_id
+                                   AND P.owner_id = U.email
+                                   AND W.email = ?;`;
+
+            const queryImages = `SELECT image_url FROM Post_Image WHERE post_id = ?`;
+            const queryPostCategories = `SELECT category_id FROM Post_Category WHERE post_id = ?`;
+                
+                db.all(queryWishlist, [email], (err, wishlistItems) => {
+                    if (err) {
+                        console.error(err.message);
+                        res.status(500).json({ error: err.message });
+                        return;
+                    }
+                
+                // Fetch images/categories for each wishlist item
+                const wishlistPromises = wishlistItems.map((item) => {
+                    return new Promise((resolve, reject) => {
+                        db.all(queryImages, [item.post_id], (err, images) => {
+                            if (err) {
+                                reject(err);
+                                return;
+                            }
+                            item.images = images.map((img) => img.image_url);
+                            
+                            // Categories for the post
+                            db.all(queryPostCategories, [item.post_id], (err, categories) => {
+                                if (err) {
+                                    reject(err);
+                                    return;
+                                }
+                                item.categories = categories.map((cat) => cat.category_id);
+                                resolve(item);
+                            });
+                        });
+                    });
+                });
+
+                Promise.all(wishlistPromises).then((results) => {
+                    res.json({ wishlist: results });
+                }).catch((error) => {
+                    console.error(error.message);
+                    res.status(500).json({ error: error.message });
+                });
+            });
+        });
+
+
+        // POST add to wishlist
+        router.post("/wishlist", (req, res) => {
+            const { email, post_id } = req.body;
+            const query = `INSERT INTO Wishlist (email, post_id) VALUES (?, ?)`;
+            db.run(query, [email, post_id], function(err) {
+                if (err) {
+                    console.error(err.message);
+                    res.status(500).json({ error: err.message });
+                    return;
+                }
+                res.json({ success: true, message: "Item added successfully" });
+            });
+        });
+
+        // DELETE from wishlist
+        router.delete("/wishlist", (req, res) => {
+            const { email, post_id } = req.body;
+            const query = `DELETE FROM Wishlist WHERE email = ? AND post_id = ?`;
+            db.run(query, [email, post_id], function(err) {
+                if (err) {
+                    console.error(err.message);
+                    res.status(500).json({ error: err.message });
+                    return;
+                }
+                res.json({ success: true, message: "Item removed from wishlist" });
+            });
+        });
+
     return router;
 }
