@@ -2,6 +2,7 @@
 
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useUser } from '@auth0/nextjs-auth0/client';
 import { clearPreviewData } from 'next/dist/server/api-utils';
 
@@ -240,11 +241,23 @@ interface ProductCardProps {
 }
 
 const ProductCard: React.FC<ProductCardProps> = ({product, initialFav = false, setExplorePageItems}) => {
-    const { user } = useUser();   
+    const { user } = useUser();  
+    const router = useRouter(); 
     const [fav, setFav] = useState(initialFav);
     const [open, setOpen] = useState(false);
     const [i,   setI]     = useState(0);
     const ref= useRef<HTMLDivElement|null>(null);
+
+    const handleAction = (type: 'forSale' | 'forRent') => {
+        if (!user) {
+            // Redirect to sign-in/register page if user is not signed in
+            router.push('/api/auth/login');
+            return;
+        }
+
+        // Call addToCart if the user is signed in
+        addToCart(product, type, user, setExplorePageItems);
+    };
 
     const addToCart = async (product: Product, type: 'forSale' | 'forRent', user: any, setExplorePageItems: React.Dispatch<React.SetStateAction<Product[]>>) => {
         try {
@@ -385,12 +398,12 @@ const ProductCard: React.FC<ProductCardProps> = ({product, initialFav = false, s
                         : <>
                             {product.forSale &&
                                 <button style={{ backgroundColor: brandBrown }} className="text-white text-sm py-1 px-3 rounded-sm flex-1"
-                                onClick={() => addToCart(product, 'forSale', user, setExplorePageItems)}>
+                                onClick={() => handleAction('forSale')}>
                                     Buy for ${product.price}
                                 </button>}
                             {product.forRent &&
                                 <button style={{ color: brandBrown }} className="border border-gray-400 text-sm py-1 px-3 rounded-sm flex-1"
-                                onClick={() => addToCart(product, 'forRent', user, setExplorePageItems)}>
+                                onClick={() => handleAction('forRent')}>
                                     Rent
                                 </button>}
                         </>}
