@@ -9,6 +9,31 @@ const brandPink = '#FDEEEA';
 const brandLightBrown = '#efe4e1';
 const brandBrown = '#675a5e';
 
+interface Lister {
+    display   : string;   // “Nancy L.”
+    username  : string;   // “nancy-l”   (used in /profile/{username})
+    avatarUrl : string;
+}
+
+const avatar = (name: string) =>
+    `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&size=64&background=DDDDDD&color=000`;
+
+interface Product {
+    id        : number;
+    title     : string;
+    price     : number;
+    forSale   : boolean;
+    forRent   : boolean;
+    type      : string[]; //'Tops'|'Bottoms'|'Outerwear'|'Dresses'|'Shoes'|'Accessories';
+    audience  : string[]; //"Men's" |"Women's"|"Kids";
+    colors    : string[];
+    sizes     : string[];
+    condition : string;
+    description?: string;
+    images    : string[];          // empty ⇒ gray placeholder
+    lister    : Lister;            // NEW
+}
+
 const Header: React.FC = () => {
     const { user } = useUser();
 
@@ -70,6 +95,27 @@ const Header: React.FC = () => {
                 ) : (
                     /* ---------- logged-IN ----------- */
                     <>
+                        {/* shopping cart (only visible when logged in) */}
+                    
+                        <Link href="/cart">
+                            <button className="p-2" style={{ color: 'white'}} aria-label='Shopping Cart'>
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    strokeWidth="1.5"
+                                    stroke="currentColor"
+                                    className="w-6 h-6"
+                                >
+                                    <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-1.5 6h11L17 13M9 21a1 1 0 1 1-2 0 1 1 0 0 1 2 0Zm8 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0Z"
+                                    />
+                                </svg>
+                            </button>
+                        </Link>
+                
                         {/* favourites */}
                         <Link
                             href="/favorites"
@@ -92,29 +138,6 @@ const Header: React.FC = () => {
                                 />
                             </svg>
                         </Link>
-
-                        {/* cart button */}
-                        {/* <Link
-                            href={user ? "/cart" : "/api/auth/login?returnTo=/cart"}
-                            className="p-2"
-                            style={{ color: 'white' }}
-                            aria-label="Cart"
-                        >
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                viewBox="0 0 24 24"
-                                strokeWidth={1.5}
-                                stroke="currentColor"
-                                fill="none"
-                                className="w-6 h-6"
-                            >
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    d="M3 3h2.25l1.5 9h12l1.5-9H6.75M3 3h0m0 0L4.5 12m-1.5-9h0m0 0L6 21h12l1.5-9H6m0 0h12m-12 0L4.5 12m12 0h0"
-                                />
-                            </svg>
-                        </Link> */}
 
                         {/* profile dropdown */}
                         <div className="relative" ref={dropRef}>
@@ -341,22 +364,34 @@ const ProductCard: React.FC<{ image: string; title: string; buyPrice: string }> 
     </article>
 );
 
-const TrendingItems: React.FC = () => {
-    const products = [
-        {
-            id: 1,
-            image: 'https://cdn.builder.io/api/v1/image/assets/TEMP/a597e91d65960d1b00fc109a2fefe3b003a97311',
-            title: 'Gradient Graphic T-shirt',
-            buyPrice: '$10',
-        },
-    ];
+const TrendingItems: React.FC<{ products: Product[] }> = ({ products }) => {
+    // const products = [
+    //     {
+    //         id: 1,
+    //         image: 'https://cdn.builder.io/api/v1/image/assets/TEMP/a597e91d65960d1b00fc109a2fefe3b003a97311',
+    //         title: 'Gradient Graphic T-shirt',
+    //         buyPrice: '$10',
+    //     },
+    // ];
+    
+    // <ProductCard
+    //     key={product.id}
+    //     image={product.images?.[0] ?? '/placeholder.jpg'}
+    //     title={product.title}
+    //     buyPrice={`$${product.price}`}
+    // />
 
     return (
         <section className="mb-10 text-center px-4">
             <h2 className="mb-8 text-3xl md:text-4xl font-semibold text-black">Trending Items</h2>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
                 {products.map((product) => (
-                    <ProductCard key={product.id} {...product} />
+                    <ProductCard
+                    key={product.id}
+                    image={product.images?.[0] ?? '/placeholder.jpg'}
+                    title={product.title}
+                    buyPrice={`$${product.price}`}
+                />
                 ))}
             </div>
             <button className="px-10 py-3 mt-8 text-sm md:text-base font-medium text-black border border-black border-opacity-10 rounded-full">
@@ -471,6 +506,109 @@ const Footer: React.FC = () => (
 export default function Home() {
     const { user } = useUser();
 
+    const [featuredItems, setFeaturedItems] = useState<Product[]>([]);
+
+    /* filter options */
+    const typeOptions    = ['Tops','Bottoms','Outerwear','Dresses','Shoes','Accessories'];
+    const genderOptions  = ["Men's","Women's","Kids"];
+    const categoryOptions= ['For Rent','For Sale'];
+    const conditionOpts  = ['Brand new','Used – Like new','Used – Good','Used – Fair'];
+    const sizeOptions    = ['XX-Small','X-Small','Small','Medium','Large','X-Large','XX-Large','3X-Large','4X-Large'];
+    const colorOptions   = ['black','white','red','blue','green','pink'];
+
+    // map UI labels to db values
+    const audienceMap = [
+        { label: genderOptions[1], db_val: 1 }, // Women's
+        { label: genderOptions[0], db_val: 2 }, // Men's
+        { label: genderOptions[2], db_val: 3 } // Kids
+    ];
+
+    const typesMap = [
+        { label: typeOptions[0], db_val: 4 },
+        { label: typeOptions[1], db_val: 5 },
+        { label: typeOptions[2], db_val: 6 },
+        { label: typeOptions[3], db_val: 7 },
+        { label: typeOptions[4], db_val: 8 },
+        { label: typeOptions[5], db_val: 9 }
+    ];
+
+    const colorsMap = [
+        { label: colorOptions[0], db_val: 10 },
+        { label: colorOptions[1], db_val: 11 },
+        { label: colorOptions[2], db_val: 12 },
+        { label: colorOptions[3], db_val: 13 },
+        { label: colorOptions[4], db_val: 14 },
+        { label: colorOptions[5], db_val: 15 }
+    ];
+
+    const dbConditionVals = [
+        { label: conditionOpts[0], db_val: "new"},
+        { label: conditionOpts[1], db_val: "excellent"},
+        { label: conditionOpts[2], db_val: "good"},
+        { label: conditionOpts[3], db_val: "worn"},
+    ];
+
+    // returns one string for type ("Women's", "Men's", or "Kids")
+    function getUIAudience(dbVals: any) {
+        return audienceMap.filter(item => dbVals.includes(item.db_val)).map(item => item.label);
+    }
+
+    // returns one string for type (Tops, Bottoms, Outerwear, ...)
+    function getUIType(dbVals: any) {
+        return typesMap.filter(item => dbVals.includes(item.db_val)).map(item => item.label);
+    }
+
+    // returns array of colors as strings
+    function getUIColors(dbVals: any) {
+        return colorsMap.filter(item => dbVals.includes(item.db_val)).map(item => item.label);
+    }
+
+    // returns one string for condition
+    function getUICondition(condition: string) {
+        var matchedCondition = dbConditionVals.find(item => item.db_val == condition);
+        return matchedCondition?.label;
+    }
+
+    useEffect(() => {
+        fetch('http://localhost:8800/api/posts/trending')
+            .then((response) => {
+                console.log("Response status: ", response.status);
+                return response.json();
+            })
+            .then((data) => {
+                console.log('Fetched posts: ', data);
+
+                if (!data.trending || !Array.isArray(data.trending)) {
+                    console.error("Invalid data format:", data);
+                    setFeaturedItems([]);
+                    return;
+                }
+
+                const transformed: Product[] = data.trending.map((post: any) => ({
+                    id: post.post_id,
+                    title: post.title,
+                    price: post.price ?? 20, // Default price if not provided
+                    forSale: post.sflag === 1,
+                    forRent: post.bflag === 1,
+                    sold: post.sold ?? false,
+                    type: getUIType(post.categories), //post.type ?? '',
+                    audience: getUIAudience(post.categories), //post.audience ?? '',
+                    colors: getUIColors(post.categories), //post.colors ?? [],
+                    sizes: post.size ? [post.size] : [], // Wrap size in an array
+                    condition: getUICondition(post.item_condition), //post.item_condition,
+                    description: post.description,
+                    images: post.images, // Use the images array directly
+                    lister: {
+                        display: post.lister?.display ?? 'Unknown',
+                        username: post.lister?.username ?? 'unknown-user',
+                        avatarUrl: post.lister?.avatarUrl ?? avatar(post.lister?.display ?? 'Unknown'),
+                    },
+                }));
+                setFeaturedItems(transformed);
+            })
+            .catch((error) => console.log('Error fetching landing page featured items: ', error));
+    }, []);
+
     // Remove sessionStorage item when there is no user logged in - O.C.
     useEffect(() => {
         if (!user) {
@@ -485,7 +623,7 @@ export default function Home() {
             <FeaturesSection />
             <RegistrationCTA />
             <ProductShowcase />
-            <TrendingItems />
+            <TrendingItems products={featuredItems} />
             <PurposeSection />
             <Footer />
         </main>

@@ -40,6 +40,87 @@ app.get('/api/users', (req, res) => {
     });
 });
 
+app.get('/api/posts/trending', (req, res) => {
+    const queryTrending = `
+        SELECT
+            Post.*,
+            COUNT(User_Like.post_id) AS like_count
+        FROM 
+            Post
+        LEFT JOIN
+            User_Like ON Post.post_id = User_Like.post_id
+        GROUP BY
+            Post.post_id
+        ORDER BY
+            like_count DESC
+        LIMIT 8
+    `;
+    const queryImages = `SELECT image_url FROM Post_Image WHERE post_id = ?`;
+    const queryUser = `SELECT first_name, last_name FROM User WHERE email = ?`;
+    const queryPostCategories = `SELECT category_id FROM Post_Category WHERE post_id = ?`;
+
+    db.all(queryTrending, [], (err, posts) => {
+        if (err) {
+            console.error(err.message);
+            res.status(500).json({ error: err.message });
+            return;
+        }
+
+        // Fetch images, categories, and lister details for each product
+        const postsWithDetails = posts.map((post) => {
+            return new Promise((resolve, reject) => {
+                db.all(queryImages, [post.post_id], (err, images) => {
+                    if (err) {
+                        reject(err);
+                        return;
+                    }
+                    post.images = images.map((img) => img.image_url);
+
+                    db.all(queryPostCategories, [post.post_id], (err, categories) => {
+                        if (err) {
+                            reject(err);
+                            return;
+                        }
+                        post.categories = categories.map((cat) => cat.category_id);
+
+                        // Fetch lister details for the post
+                        db.get(queryUser, [post.owner_id], (err, user) => {
+                            if (err) {
+                                reject(err);
+                                return;
+                            }
+
+                            if (user) {
+                                port.lister = {
+                                    display: `${user.first_name} ${user.last_name.charAt(0)}.`,
+                                    username: post.owner_id,
+                                    avatarUrl: null,
+                                };
+                            } else {
+                                post.lister = {
+                                    display: 'Unknown',
+                                    username: 'unknown-user',
+                                    avatarUrl: null,
+                                }
+                            }
+                            resolve(post);
+                        })
+                    })
+                })
+            })
+        })
+
+        Promise.all(postsWithDetails)
+            .then((results) => {
+                res.json({ trending: results });
+            })
+            .catch((error) => {
+                console.error(error.message);
+                res.status(500).json({ error: error.message });
+            });
+    })
+})
+
 // For testing - route to get all posts
 app.get('/api/posts-all', (req, res) => {
     const sqlSelectAll = `SELECT * FROM Post`;
