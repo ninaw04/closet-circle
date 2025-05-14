@@ -423,7 +423,7 @@ const ProductCard: React.FC<ProductCardProps> = ({product, initialFav = false, s
                             {product.forRent &&
                                 <button style={{ color: brandBrown }} className="border border-gray-400 text-sm py-1 px-3 rounded-sm flex-1"
                                 onClick={() => handleAction('forRent')}>
-                                    Rent
+                                    Rent for ${product.price}
                                 </button>}
                         </>}
                 </div>
