@@ -374,7 +374,7 @@ const ClosetCard: React.FC<{ product: ClosetProduct }> = ({ product }) => {
                                     className="border border-gray-400 text-sm py-1 px-3 rounded-sm flex-1"
                                     style={{ color: brandBrown }}
                                 >
-                                    Rent
+                                    Rent for ${product.price} Per Day
                                 </button>
                             )}
                         </>
@@ -611,19 +611,29 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({ open, onClose,
                 </label>
 
                 {/* ---------- SALE / RENT ---------- */}
-                <div className="flex gap-6">
+                <div className="flex gap-20">
                     <label className="flex items-center gap-2">
                         <input
-                            type="checkbox"
+                            type="radio"
+                            name="radioSellRent"
                             checked={draft.forSale}
-                            onChange={e => update('forSale', e.target.checked)}
+                            onChange={e => {
+                                update('forSale', true);
+                                update('forRent', false);
+                                }
+                            }
                         /> For&nbsp;Sale
                     </label>
                     <label className="flex items-center gap-2">
                         <input
-                            type="checkbox"
+                            type="radio"
+                            name="radioSellRent"
                             checked={draft.forRent}
-                            onChange={e => update('forRent', e.target.checked)}
+                            onChange={e => {
+                                update('forRent', true);
+                                update('forSale', false);
+                                }
+                            }
                         /> For&nbsp;Rent
                     </label>
                 </div>
