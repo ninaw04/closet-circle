@@ -245,7 +245,7 @@ module.exports = (db) => {
         })
     })
 
-    // update cart status
+    // PUT cart status
     router.put("/checkout", (req, res) => {
         const { transactionId } = req.query;
         const checkoutQuery = `
@@ -278,7 +278,7 @@ module.exports = (db) => {
         })
     })
 
-    // get transaction id
+    // GET transaction id
     router.get("/cart/id", (req, res) => {
         const { email } = req.query;
         const query = `SELECT transaction_id FROM Transactions WHERE email = ? AND status = 'pending'`;
@@ -300,7 +300,6 @@ module.exports = (db) => {
         })
     })
 
-    // PUT updates existing data
     // DELETE cart item
     router.delete("/cart/item", (req, res) => {
         const { transactionId, postId } = req.body;
@@ -318,7 +317,7 @@ module.exports = (db) => {
     })
 
 
-    // POST post for a specific user - O.C.
+    // POST for a specific user - O.C.
     router.post("/upload-item", (req, res) => {
         var post_id;
         const { closet_id, owner_id, title, likes, item_pictures, description, date_posted, item_condition, categories, size, for_sale, for_rent, price, rental_date } = req.body;
@@ -355,7 +354,7 @@ module.exports = (db) => {
                 });
 
                 // Associate post with each category that was selected - O.C.
-                // categories is an array of integers representing the category_id
+                // Categories is an array of integers representing the category_id
                 categories.forEach(category_id => {
                         db.run(
                             query_post_category,
@@ -411,7 +410,7 @@ module.exports = (db) => {
 
     }) 
 
-    // get purchased transactions for a user
+    // GET purchased transactions for a user
     router.get("/order-history/purchased", (req, res) => {
         const { email } = req.query;
         const queryTransaction = `SELECT transaction_id, purchased_date FROM Transactions WHERE email = ? AND status = 'purchased'`;
@@ -427,12 +426,12 @@ module.exports = (db) => {
             }
 
             if (!transactions) {
-                // no purchased transactions found
+                // No purchased transactions found
                 res.json({ orders: [] });
                 return;
             }
 
-            // find all listings for all found transactions for this user
+            // Find all listings for all found transactions for this user
             const transactionPromises = transactions.map((transaction) => {
                 return new Promise((resolve, reject) => {
                     // Find all listings in the transaction
@@ -478,7 +477,7 @@ module.exports = (db) => {
                         });
 
                         Promise.all(orderDetailsPromises)
-                            // Filer out any null results
+                            // Filter out any null results
                             .then(results => resolve(results.filter(r => r !== null)))
                             .catch(reject);
                     });
@@ -498,7 +497,7 @@ module.exports = (db) => {
             })
         })
 
-    // get seller transaction history
+    // GET seller transaction history
     router.get("/seller-history", (req, res) => {
         const { email } = req.query;
         const queryTransaction = `SELECT transaction_id, purchased_date FROM Transactions WHERE status = 'purchased'`;
@@ -515,12 +514,12 @@ module.exports = (db) => {
             }
 
             if (!transactions) {
-                // no purchased transactions found
+                // No purchased transactions found
                 res.json({ orders: [] });
                 return;
             }
 
-            // find all listings for all found transactions for this user
+            // Find all listings for all found transactions for this user
             const transactionPromises = transactions.map((transaction) => {
                 return new Promise((resolve, reject) => {
                     // Find all listings in the transaction

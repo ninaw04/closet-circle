@@ -28,7 +28,12 @@ const brandPink = "#FDEEEA";
 const brandLightBrown = "#efe4e1";
 const brandBrown = "#675a5e";
 
+/**
+ * Displays current user's wishlist of favorite products based on user's email
+ * and has each item as a ProductCard with the option to remove it
+ */
 const FavoritesPage: React.FC = () => {
+    // Get  user info and have state to store wishlist items
     const { user } = useUser();
     const [favoriteItems, setFavoriteItems] = useState<Product[]>([]);
 
@@ -48,6 +53,7 @@ useEffect(() => {
                     return;
                 }
                 console.log(data.wishlist);
+                // Make backend data Product objects
                 setFavoriteItems(
                   data.wishlist.map((item: any) => ({
                     id: item.post_id,
@@ -85,7 +91,7 @@ useEffect(() => {
 
 
 
-// Remove item from wishlist
+// Remove item from wishlist on front and backend
 const handleRemove = async (id: number) => {
     if (!user) return;
     try {
@@ -95,7 +101,7 @@ const handleRemove = async (id: number) => {
             body: JSON.stringify({ email: user.email, post_id: id }),
         });
         const data = await response.json();
-
+        // Update local state to show deletion
         if (response.ok) {
             setFavoriteItems((prev) => prev.filter((p) => p.id !== id));
         } else {
@@ -105,7 +111,7 @@ const handleRemove = async (id: number) => {
         console.error('Error removing from wishlist:', error);
     }
 }
-
+    // Display to UI
     return (
         <div className="min-h-screen flex flex-col bg-white">
             <Header />

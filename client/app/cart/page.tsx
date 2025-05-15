@@ -17,7 +17,7 @@ interface Product {
     id        : number;
     title     : string;
     price     : number;
-    images    : string[];          // empty ⇒ gray placeholder
+    images    : string[];       
     isRented?: boolean;
 }
 
@@ -140,6 +140,7 @@ const Header: React.FC = () => {
 };
 
 const CartPage: React.FC = () => {
+    // Necessary to calculate prices
     const { user }        = useUser();
     const [cartTransactionId, setCartTransactionId] = useState(-1);
     const [cartItems, setCartItems] = useState<Product[]>([]);
@@ -148,9 +149,6 @@ const CartPage: React.FC = () => {
     const taxAmount = subtotal * 0.093;
     const shippingCost = subtotal >= 30 ? 0 : 5.99;
     const grandTotal = subtotal + taxAmount + shippingCost;
-
-
-    // Calculate total price
 
     // Handle item removal
     const handleRemoveItem = async (id: number) => {

@@ -15,9 +15,6 @@ const brandPink = "#FDEEEA";
 const brandLightBrown = "#efe4e1";
 const brandBrown = "#675a5e";
 
-// const { user } = useUser();
-// const [explorePageItems, setExplorePageItems] = useState<Product[]>([]);
-
 /* -------------------------------------------
    TYPES
 ------------------------------------------- */
@@ -40,8 +37,8 @@ interface Product {
     sizes     : string[];
     condition : string;
     description?: string;
-    images    : string[];          // empty ⇒ gray placeholder
-    lister    : Lister;            // NEW
+    images    : string[];       
+    lister    : Lister;           
 }
 
 /* helper to create avatar url */
@@ -305,7 +302,7 @@ const ProductCard: React.FC<ProductCardProps> = ({product, initialFav = false, s
                 </svg>
             </button>
 
-            {/* image area */}
+            {/* image section */}
             {imgCount ? (
                 <div className="relative">
                     <img src={imgs[i]} alt={product.title}
@@ -793,7 +790,7 @@ export {
     ProductCard,
     Footer,
     type Product,
-    getUIType,
+    getUIType, // export for favorites page
     getUIAudience, 
     getUIColors, 
     getUICondition, 
