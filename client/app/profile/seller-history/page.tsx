@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Header, Footer} from '../../explore/page';
+import { Header, Footer } from '../../explore/page';
 import { useUser } from '@auth0/nextjs-auth0/client';
 
 const brandNavy = '#284472';
@@ -27,40 +27,40 @@ const SellerHistoryPage: React.FC = () => {
 
     const [soldItems, setSoldOrders] = useState<Product[]>([]); // items for sale
     const [borrowedItems, setBorrowedOrders] = useState<Product[]>([]); // items for rent
-    
-        /* Fetch all ordered items */
-        useEffect(() => {
-            if (!user) return;
-                
-            fetch(`http://localhost:8800/api/profile/seller-history?email=${user.email}`)
-                .then((response) => response.json())
-                .then((data) => {
-                    console.log('Fetched posts: ', data);
-        
-                    if (!Array.isArray(data.orders)) {
-                        console.error("Invalid data format:", data);
-                        setSoldOrders([]);
-                        return;
-                    }
-        
-                    const transformed: Product[] = data.orders.map((post: any) => ({
-                        id: post.post_id,
-                        title: post.title,
-                        price: post.price ?? 20, // Default price if not provided
-                        images: post.images, // Use the images array directly
-                        date: post.purchased_date.substring(0, post.purchased_date.indexOf(' ')), // date format yyy-mm-dd (doesnt display timestamp)
-                        purchased: post.sflag === 1,
-                        borrowed:  post.bflag === 1
-                    }));
-                    
-                    const purchasedItems = transformed.filter(item => item.purchased == true);
-                    const borrowedItems = transformed.filter(item => item.borrowed == true && item.purchased == false);
-                    setSoldOrders(purchasedItems);
-                    setBorrowedOrders(borrowedItems);
-                    //setPurchasedOrders(transformed);
-                })
-                .catch((error) => console.log('Error fetching cart items: ', error));
-        }, [user]);
+
+    /* Fetch all ordered items */
+    useEffect(() => {
+        if (!user) return;
+
+        fetch(`http://localhost:8800/api/profile/seller-history?email=${user.email}`)
+            .then((response) => response.json())
+            .then((data) => {
+                console.log('Fetched posts: ', data);
+
+                if (!Array.isArray(data.orders)) {
+                    console.error("Invalid data format:", data);
+                    setSoldOrders([]);
+                    return;
+                }
+
+                const transformed: Product[] = data.orders.map((post: any) => ({
+                    id: post.post_id,
+                    title: post.title,
+                    price: post.price ?? 20, // Default price if not provided
+                    images: post.images, // Use the images array directly
+                    date: post.purchased_date.substring(0, post.purchased_date.indexOf(' ')), // date format yyy-mm-dd (doesnt display timestamp)
+                    purchased: post.sflag === 1,
+                    borrowed:  post.bflag === 1
+                }));
+
+                const purchasedItems = transformed.filter(item => item.purchased == true);
+                const borrowedItems = transformed.filter(item => item.borrowed == true && item.purchased == false);
+                setSoldOrders(purchasedItems);
+                setBorrowedOrders(borrowedItems);
+                //setPurchasedOrders(transformed);
+            })
+            .catch((error) => console.log('Error fetching cart items: ', error));
+    }, [user]);
 
     const items = tab === 'Sold' ? soldItems : borrowedItems;
     const currentPage = pageMap[tab];
@@ -73,26 +73,24 @@ const SellerHistoryPage: React.FC = () => {
     const totalProfit = soldItems.reduce((sum, item) => sum + item.price, 0).toFixed(2);
 
     const renderItem = (item: any) => (
-        <div key={item.id} className="flex items-center gap-4 border p-4 rounded relative">
-            <div className="flex gap-2">
+        <div key={item.id} className="flex items-center gap-6 border p-6 rounded relative">
+            <div className="flex gap-4">
                 {item.images?.length ? (
                     item.images.map((img: string, i: number) => (
-                        <img key={i} src={img} className="w-20 h-20 object-cover rounded" alt="Product" />
+                        <img key={i} src={img} className="w-32 h-32 object-cover rounded" alt="Product" />
                     ))
                 ) : (
-                    <div className="w-20 h-20 bg-gray-200 flex items-center justify-center rounded text-gray-500 text-sm">
+                    <div className="w-32 h-32 bg-gray-200 flex items-center justify-center rounded text-gray-500 text-xs">
                         No Image
                     </div>
                 )}
             </div>
             <div className="flex-1">
-                <h2 className="text-lg font-medium" style={{ color: brandBrown }}>{item.title}</h2>
-                <p className="text-gray-600">${item.price.toFixed(2)}</p>
-                {tab === 'Sold' && <p className="text-sm text-gray-500">Sold on: {item.date}</p>}
-                {tab === 'Borrowed' && <p className="text-sm text-gray-500">Borrowed on: {item.date}</p>}
-
+                <h2 className="text-base font-medium" style={{ color: brandBrown }}>{item.title}</h2>
+                <p className="text-sm font-medium text-gray-600">${item.price.toFixed(2)}</p>
+                {tab === 'Sold' && <p className="text-xs text-gray-500">Sold on: {item.date}</p>}
+                {tab === 'Borrowed' && <p className="text-xs text-gray-500">Borrowed on: {item.date}</p>}
             </div>
-
         </div>
     );
 
@@ -100,7 +98,7 @@ const SellerHistoryPage: React.FC = () => {
         <div className="min-h-screen flex flex-col bg-white">
             <Header />
 
-            <div className="container mx-auto py-6 px-4 flex-1">
+            <div className="container mx-auto py-6 px-4 pb-64 flex-1">
                 <h1 style={{ color: brandBrown }} className="text-4xl font-medium mb-8">My Account</h1>
 
                 <div className="flex flex-col md:flex-row gap-8">
@@ -127,7 +125,7 @@ const SellerHistoryPage: React.FC = () => {
                         <h2 style={{ color: brandBrown }} className="text-2xl font-semibold mb-4">Seller History</h2>
 
                         {/* Summary */}
-                        <div className="mb-6 text-base text-gray-700 space-y-1">
+                        <div className="mb-6 text-lg text-gray-700 space-y-1">
                             <p>Total Profit: <span className="font-semibold">${totalProfit}</span></p>
                             <p>Products Sold: <span className="font-semibold">{soldItems.length}</span></p>
                             <p>Products Borrowed: <span className="font-semibold">{borrowedItems.length}</span></p>
@@ -148,7 +146,7 @@ const SellerHistoryPage: React.FC = () => {
                         </div>
 
                         {/* Item list */}
-                        <div className="space-y-4" ref={listRef}>
+                        <div className="space-y-8" ref={listRef}>
                             {pagedItems.map(renderItem)}
                         </div>
 
