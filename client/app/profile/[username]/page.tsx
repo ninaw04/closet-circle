@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useMemo, useEffect } from 'react';
+import { useUser, withPageAuthRequired } from '@auth0/nextjs-auth0/client';
 import { useParams }   from 'next/navigation';
 import {
     Header,
@@ -27,6 +28,9 @@ const sizeOptions      = ['XX-Small','X-Small','Small','Medium','Large','X-Large
 const colorOptions     = ['black','white','red','blue','green','pink'] as const;
 
 export default function ProfilePageByUsername() {
+    const { user } = useUser();
+    const [followToggle, setToggled] = useState(true); // default button shows 'Follow'
+
     /* basic profile state */
     const [firstName, setFirstName] = useState('');
     const [lastName,  setLastName ] = useState('');
@@ -41,6 +45,7 @@ export default function ProfilePageByUsername() {
     const email = decodeURIComponent(rawParam);
     console.log("username " + email);
 
+    /* get profile info from db */
     useEffect(() => {
         console.log("raw param: " + rawParam);
         console.log("email: " + email);
@@ -65,7 +70,7 @@ export default function ProfilePageByUsername() {
         rating:      4.5, // out of 5
     };         
 
-/* fetch unavailable items */
+    /* fetch unavailable items */
     useEffect(() => {
         fetch(`http://localhost:8800/api/profile/seller-history?email=${email}`)
                 .then((response) => response.json())
@@ -162,6 +167,74 @@ export default function ProfilePageByUsername() {
         var matchedCondition = dbConditionVals.find(item => item.db_val == condition);
         return matchedCondition?.label;
     }
+    
+    /* Check if this logged in user is following this profile */
+    /* get this profile's followers, check if logged in user is included, set Unfollow if so */
+    useEffect(() => {
+        if(!user) return;
+        fetch(`http://localhost:8800/api/profile/followers?email=${email}`)
+            .then((r) => r.json())
+            .then((data) => {
+                const profileFollowers = data.followers.map((f: { email: any; }) => f.email);
+                if (profileFollowers.includes(user.email)) {
+                    setToggled(false); // false means button shows 'Unfollow'
+                } else {
+                    setToggled(true); // true means button shows 'Follow'
+                }
+            })
+    }, [user]);
+
+  /* 
+    Follow button saves friends to the database through POST
+    If user is already following this profile, removes from friends
+  */
+  const handleFollow = async (e: { preventDefault: () => void; }) => {
+    e.preventDefault();
+    if(!user) return;
+
+    // get data from this logged in user
+    const friendInfo = {email: user.email, friend_id: email};
+
+    if (followToggle == true) {
+        // send data through POST
+        const response = await fetch('http://localhost:8800/api/profile/add-friend', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(friendInfo),
+        });
+
+        const result = await response.json();
+
+        // redirect to profile page when user submits form
+        if (response.ok) {
+            console.log('Friend saved:', result);
+            // make button show 'Unfollow'
+            setToggled(prev => !prev);
+        } else {
+            console.log('Error:', result);
+        }
+
+    } else {
+        // remove from followers
+        const response = await fetch("http://localhost:8800/api/profile/remove-friend", {
+            method: "DELETE",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(friendInfo),
+            });
+
+            const result = await response.json();
+            if (response.ok) {
+                console.log('Friend saved:', result);
+                // make button show 'Follow'
+                setToggled(prev => !prev);
+            } else {
+                console.error("Failed to remove friend:", result.error);
+            }
+    }
+    
+  };
 
     // 4) filter / sort / pagination state
     const [selTypes,    setTypes]    = useState<string[]>([]);
@@ -300,8 +373,9 @@ export default function ProfilePageByUsername() {
                     <button
                         style={{ backgroundColor: brandNavy, color: 'white' }}
                         className="ml-6 px-4 py-2 rounded"
+                        onClick={handleFollow}
                     >
-                        Follow
+                        {followToggle ? 'Follow' : 'Unfollow'}
                     </button>
                 </div>
             </div>

@@ -816,7 +816,7 @@ const ProfilePage: React.FC = () => {
 
     /* ui state */
     const [activeTab]       = useState('Profile');
-    const [activeProfileTab, setActiveProfileTab] = useState< 'My Closet' | 'Friends' | 'Following'>(
+    const [activeProfileTab, setActiveProfileTab] = useState< 'My Closet' | 'Following' | 'Followers'>(
         'My Closet'
     );
     const [activeClosetTab, setActiveClosetTab] =
@@ -825,9 +825,10 @@ const ProfilePage: React.FC = () => {
         );
     const closetTabs = ['All', 'Available', 'For Rent', 'Sold'] as const;
 
-    /* closet data (start with placeholder) */
+    /* closet data */
     const [closetItems, setClosetItems] = useState<ClosetProduct[]>([]);
     const [friends,   setFriends  ] = useState<Friend[]>([]);
+    const [followers,   setFollowers  ] = useState<Friend[]>([]);
 
     const [unavailablePostIDs, setUnavailableArr] = useState<Number[]>([]);
 
@@ -961,6 +962,16 @@ const ProfilePage: React.FC = () => {
             })
     }, [user]);
 
+    /* fetch user followers list */
+    useEffect(() => {
+        if(!user) return;
+        fetch(`http://localhost:8800/api/profile/followers?email=${user.email}`)
+            .then((r) => r.json())
+            .then((data) => {
+                setFollowers(data.followers);
+            })
+    }, [user]);
+
 
     /* filtered view */
     const filtered = closetItems.filter((item) => {
@@ -971,7 +982,6 @@ const ProfilePage: React.FC = () => {
     });
 
     /* loading / unauth */
-    //if (!user) return null;
     if (isLoading)
         return (
             <div
@@ -1017,8 +1027,8 @@ const ProfilePage: React.FC = () => {
         { label: colorOptions[5], db_val: 15 }
     ];
 
+    // array of all mappings
     const dbCategories = audienceMap.concat(typesMap, colorsMap);
-    //console.log(dbCategories);
 
     const dbConditionVals = [
         { label: conditionOptions[0], db_val: "new"},
@@ -1027,6 +1037,7 @@ const ProfilePage: React.FC = () => {
         { label: conditionOptions[3], db_val: "worn"},
     ];
 
+    /* Returns an array of the db_vals for all categories user selected in uploading a post */
     function getDBCategories(type: any, audience: any, colors: string[] | undefined) {
         var dbCategoryID: any = [];
         dbCategories.forEach(cat => {
@@ -1047,6 +1058,7 @@ const ProfilePage: React.FC = () => {
         return dbCategoryID;
     }
 
+    /* Returns the db_val for the user selected condition */
     function getDBCondition(condition: string | undefined) {
         var dbCondition;
         dbConditionVals.forEach(conditionOption => {
@@ -1206,23 +1218,29 @@ const ProfilePage: React.FC = () => {
                                 </button>
                                 <button
                                     className={`pb-2 px-1 font-medium text-xl ${
-                                        activeProfileTab === 'Friends' ? 'border-b-2' : ''
+                                        activeProfileTab === 'Following' ? 'border-b-2' : ''
                                     }`}
                                     style={{ 
                                         color: brandNavy,
                                         borderColor:
-                                            activeProfileTab === 'Friends' ? brandNavy : undefined,
+                                            activeProfileTab === 'Following' ? brandNavy : undefined,
                                      }}
-                                    onClick={() => setActiveProfileTab('Friends')}
-                                >
-                                    Friends
-                                </button>
-                                <button
-                                    className="pb-2 px-1 font-medium text-xl"
-                                    style={{ color: brandNavy }}
-                                    onClick={() => {}}
+                                    onClick={() => setActiveProfileTab('Following')}
                                 >
                                     Following
+                                </button>
+                                <button
+                                    className={`pb-2 px-1 font-medium text-xl ${
+                                        activeProfileTab === 'Followers' ? 'border-b-2' : ''
+                                    }`}
+                                    style={{ 
+                                        color: brandNavy,
+                                        borderColor:
+                                            activeProfileTab === 'Followers' ? brandNavy : undefined,
+                                     }}
+                                    onClick={() => setActiveProfileTab('Followers')}
+                                >
+                                    Followers
                                 </button>
                             </div>
                         </div>
@@ -1352,7 +1370,7 @@ const ProfilePage: React.FC = () => {
                         />
 
                         {/* Friends list */}
-                        {activeProfileTab === 'Friends' && (
+                        {activeProfileTab === 'Following' && (
                             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
                                 {friends.map((friend, index) => (
                                     <div
@@ -1392,8 +1410,62 @@ const ProfilePage: React.FC = () => {
                                             className="mt-4 px-4 py-2 text-sm font-medium text-white rounded-md"
                                             style={{ backgroundColor: brandNavy }}
                                             onClick={() => {
-                                                // Handle profile navigation (if applicable)
+                                                // Handle profile navigation
+                                                router.push(`/profile/${friend.email}`);
                                                 console.log(`Navigate to profile of ${friend.email}`);
+                                            }}
+                                        >
+                                            View Profile
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
+                        {/* Friends list */}
+                        {activeProfileTab === 'Followers' && (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+                                {followers.map((follower, index) => (
+                                    <div
+                                        key={index}
+                                        className="bg-gray-100 rounded-lg p-4 flex flex-col items-center text-center"
+                                    >
+                                        {/* Placeholder for profile image */}
+                                        <div className="w-20 h-20 rounded-full bg-gray-300 flex items-center justify-center mb-4">
+                                            <svg
+                                                xmlns="http://www.w3.org/2000/svg"
+                                                fill="none"
+                                                viewBox="0 0 24 24"
+                                                strokeWidth="1.5"
+                                                stroke="currentColor"
+                                                className="w-10 h-10 text-gray-500"
+                                            >
+                                                <path
+                                                    strokeLinecap="round"
+                                                    strokeLinejoin="round"
+                                                    d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501
+                                                    20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0
+                                                    0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z"
+                                                />
+                                            </svg>
+                                        </div>
+
+                                        {/* Friend's name */}
+                                        <h3 className="text-lg font-medium text-gray-800">
+                                            {follower.first_name} {follower.last_name}
+                                        </h3>
+
+                                        {/* Friend's email */}
+                                        <p className="text-sm text-gray-600">{follower.email}</p>
+
+                                        {/* Placeholder for profile link */}
+                                        <button
+                                            className="mt-4 px-4 py-2 text-sm font-medium text-white rounded-md"
+                                            style={{ backgroundColor: brandNavy }}
+                                            onClick={() => {
+                                                // Handle profile navigation
+                                                router.push(`/profile/${follower.email}`);
+                                                console.log(`Navigate to profile of ${follower.email}`);
                                             }}
                                         >
                                             View Profile

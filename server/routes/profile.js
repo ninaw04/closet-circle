@@ -54,7 +54,6 @@ module.exports = (db) => {
     router.get("/friends", (req, res) => {
         const { email } = req.query;
         const queryFriends = `SELECT friend_id FROM Friend WHERE email = ?`;
-        // TODO UPDATE WITH FRIEND PROFILE URL
         const queryFriendDetails = `SELECT first_name, last_name, email FROM User WHERE email = ?`;
 
         db.all(queryFriends, [email], (err, rows) => {
@@ -91,6 +90,80 @@ module.exports = (db) => {
                 });
         })
     })
+
+    // POST add friends 
+    router.post("/add-friend", (req, res) => {
+        const { email, friend_id } = req.body;
+        const queryInsertFriends = `INSERT INTO Friend (email, friend_id) VALUES (?, ?)`;
+
+        db.run(queryInsertFriends, [email, friend_id], function (err) {
+        if (err) {
+            res.status(500).json({ error: err.message });
+            return;
+        }
+        res.json({});
+    });
+    })
+
+    // GET Followers list
+    router.get("/followers", (req, res) => {
+        const { email } = req.query;
+        const queryFriends = `SELECT email FROM Friend WHERE friend_id = ?`;
+        const queryFriendDetails = `SELECT first_name, last_name, email FROM User WHERE email = ?`;
+
+        db.all(queryFriends, [email], (err, rows) => {
+            if (err) {
+                console.error(err.message);
+                res.status(500).json({ error: err.messsage });
+                return;
+            }
+
+            if (!rows || rows.length === 0) {
+                res.json({ followers: [] });
+                return;
+            }
+            console.log(rows);
+
+            const friendDetailsPromises = rows.map((row) => {
+                return new Promise((resolve, reject) => {
+                    db.get(queryFriendDetails, [row.email], (err, follower) => {
+                        if (err) {
+                            reject(err);
+                            return;
+                        }
+                        console.log(follower);
+                        resolve(follower);
+                    });
+                });
+            });
+
+            Promise.all(friendDetailsPromises)
+                .then((followers) => {
+                    res.json({ followers });
+                })
+                .catch((error) => {
+                    console.error(error.message);
+                    res.status(500).json({ error: error.message });
+                });
+        })
+    })
+
+    // DELETE friends
+    router.delete("/remove-friend", (req, res) => {
+        const { email, friend_id } = req.body;
+        const deleteQuery = `DELETE FROM Friend WHERE email = ? AND friend_id = ?`;
+
+        db.run(deleteQuery, [email, friend_id], function (err) {
+            if (err) {
+                console.error(err.message);
+                res.status(500).json({ error: "Failed to remove friend" });
+                return;
+            }
+
+            res.json({ success: true, message: "Friend unfollowed" });
+        })
+    })
+    
 
     // GET user's cart
     router.get("/cart", (req, res) => {
@@ -244,7 +317,6 @@ module.exports = (db) => {
         })
     })
 
-    // post_id: Integer, title: String, closet_id: Integer, owner_id: String, likes: Integer, item_picture: String, description: String, date_posted: Date, clothing_category: String, item_condition: String
 
     // POST post for a specific user - O.C.
     router.post("/upload-item", (req, res) => {
