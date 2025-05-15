@@ -32,7 +32,7 @@ interface Product {
     forRent   : boolean;
     sold?      : boolean;
     type      : string[]; //'Tops'|'Bottoms'|'Outerwear'|'Dresses'|'Shoes'|'Accessories';
-    audience  : string[]; //"Men's" |"Women's"|"Kids";
+    audience  : string[]; //"Men's" |"Women's"|"Kid's";
     colors    : string[];
     sizes     : string[];
     condition : string;

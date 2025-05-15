@@ -140,7 +140,6 @@ function UploadPost() {
         }
     };
 
-
     return (
         <main>
             <h1>Post an Item</h1>
