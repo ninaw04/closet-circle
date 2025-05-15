@@ -53,7 +53,7 @@ const avatar = (name: string) =>
 const PRODUCTS: Product[] = [
     { id:1, title:'Loose Fit Bermuda Shorts', price:11, forSale:false, forRent:true,
         type:['Bottoms'], audience:["Men's"], colors:['black'], sizes:['Small','Medium'],
-        condition:'Brand new', description:'Comfortable everyday Bermuda shorts.', images:[],
+        condition:'Brand New', description:'Comfortable everyday Bermuda shorts.', images:[],
         lister:{display:'Nancy L.', username:'nancy-l', avatarUrl:avatar('Nancy L')} },
 
     { id:2, title:'Courage Graphic T-Shirt', price:20, forSale:true,  forRent:false,
@@ -516,7 +516,7 @@ const Footer: React.FC = () => (
     const typeOptions    = ['Tops','Bottoms','Outerwear','Dresses','Shoes','Accessories'];
     const genderOptions  = ["Men's","Women's","Kids"];
     const categoryOptions= ['For Rent','For Sale'];
-    const conditionOpts  = ['Brand new','Used – Like new','Used – Good','Used – Fair'];
+    const conditionOpts  = ['Brand New','Used – Like New','Used – Good','Used – Fair'];
     const sizeOptions    = ['XX-Small','X-Small','Small','Medium','Large','X-Large','XX-Large','3X-Large','4X-Large'];
     const colorOptions   = ['Black','White','Red','Blue','Green','Pink'];
 
@@ -585,10 +585,12 @@ const ExplorePage: React.FC = () => {
     const [selSizes,  setSizes]  = useState<string[]>([]);
     const [selColors, setColors] = useState<string[]>([]);
     const [selGender, setGender] = useState<string[]>([]);
-    const [price,     setPrice]  = useState<[number,number]>([0,50]);
+    const [priceInput, setPrice] = useState<[string, string]>(['0','50']);
     const [sort,      setSort]   = useState('Most Popular');
     const [page,      setPage]   = useState(1);
     const perPage = 9;
+    // convert strings to numbers so can be used for filtering
+    const price = [priceInput[0] === '' ? 0 : Number(priceInput[0]), priceInput[1] === '' ? 0 : Number(priceInput[1]),];
 
     // Fetch wishlist items for user
     useEffect(() => {
@@ -688,6 +690,12 @@ const ExplorePage: React.FC = () => {
 
     /* toggle helper */
     const toggle = (v:string,l:string[],s:React.Dispatch<React.SetStateAction<string[]>>)=>{s(l.includes(v)?l.filter(x=>x!==v):[...l,v]);setPage(1);};
+   
+    const handlePriceChange = (idx: 0 | 1, val: string) => {
+    if (/^\d*$/.test(val)) {  // ensure only digits or empty string
+        setPrice(idx === 0 ? [val, priceInput[1]] : [priceInput[0], val]);
+    }
+    };
 
     /* render */
     return (
@@ -743,9 +751,9 @@ const ExplorePage: React.FC = () => {
                     <div>
                         <h3 className="font-semibold mb-2">Price ($)</h3>
                         <div className="flex gap-2 items-center">
-                            <input type="number" value={price[0]} onChange={e=>setPrice([+e.target.value,price[1]])} className="border px-2 w-20"/>
+                            <input type="number" value={priceInput[0]} onChange={e => handlePriceChange(0, e.target.value)} className="border px-2 w-20"/>
                             <span>-</span>
-                            <input type="number" value={price[1]} onChange={e=>setPrice([price[0],+e.target.value])} className="border px-2 w-20"/>
+                            <input type="number" value={priceInput[1]} onChange={e => handlePriceChange(1, e.target.value)} className="border px-2 w-20"/>
                         </div>
                     </div>
 

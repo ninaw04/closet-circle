@@ -146,7 +146,7 @@ const CartPage: React.FC = () => {
     const soldItems = cartItems.filter(item => !item.isRented);
     const subtotal = soldItems.reduce((sum, item) => sum + item.price, 0);
     const taxAmount = subtotal * 0.093;
-    const shippingCost = subtotal >= 80 ? 0 : 5.99;
+    const shippingCost = subtotal >= 30 ? 0 : 5.99;
     const grandTotal = subtotal + taxAmount + shippingCost;
 
 
@@ -324,11 +324,11 @@ const CartPage: React.FC = () => {
                             </div>
                             <div className="flex justify-between mb-4" style={{ color: brandBrown }}>
                                 <span>Shipping</span>
-                                <span>{subtotal >= 80 ? 'Free' : `$${shippingCost.toFixed(2)}`}</span>
+                                <span>{subtotal >= 30 ? 'Free' : `$${shippingCost.toFixed(2)}`}</span>
                             </div>
-                            {subtotal < 80 && (
+                            {subtotal < 30 && (
                                 <div className="text-sm mb-2" style={{ color: 'rgba(brandBrownRGB, 0.7)' }}>
-                                    ${(80 - subtotal).toFixed(2)} more to qualify for free shipping
+                                    ${(30 - subtotal).toFixed(2)} more to qualify for free shipping
                                 </div>
                             )}
                             <hr className="my-4" />
