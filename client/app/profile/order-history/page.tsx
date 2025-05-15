@@ -134,7 +134,6 @@ const OrderHistoryPage: React.FC = () => {
                                     if (label === 'Profile') location.href = '/profile';
                                     if (label === 'Order History') location.href = '/profile/order-history';
                                     if (label === 'Seller History') location.href = '/profile/seller-history';
-                                    if (label === 'Policies') location.href = '/policies';
                                 }}
                                 className={`flex items-center p-4 cursor-pointer ${
                                     label === 'Order History' ? 'font-semibold' : 'font-normal'

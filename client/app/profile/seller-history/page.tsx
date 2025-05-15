@@ -104,7 +104,7 @@ const SellerHistoryPage: React.FC = () => {
                 <div className="flex flex-col md:flex-row gap-8">
                     {/* Sidebar */}
                     <div className="w-full md:w-1/4 border rounded-lg overflow-hidden">
-                        {['Profile', 'Order History', 'Seller History', 'Policies'].map((label) => (
+                        {['Profile', 'Order History', 'Seller History'].map((label) => (
                             <div
                                 key={label}
                                 onClick={() => location.href = `/profile/${label.toLowerCase().replace(/ /g, '-')}`}

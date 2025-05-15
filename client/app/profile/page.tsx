@@ -1118,11 +1118,6 @@ const ProfilePage: React.FC = () => {
                             active={false}
                             onClick={() => router.push('/profile/seller-history')}
                         />
-                        <SidebarItem
-                            label="Policies"
-                            active={false}
-                            onClick={() => router.push('/policies')}
-                        />
                     </div>
 
                     {/* main */}
