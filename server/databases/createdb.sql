@@ -1,4 +1,5 @@
 
+
 CREATE TABLE "User"(
 	email VARCHAR(60) PRIMARY KEY,
 	first_name VARCHAR(40),
@@ -222,23 +223,34 @@ INSERT INTO Category(category_id, name) VALUES
 (13, 'Blue'),
 (14, 'Green'),
 (15, 'Pink');
-INSERT INTO Post(post_id, closet_id, owner_id, title, likes, description, date_posted, item_condition, size, price, bflag, sflag, rental_end_date) VALUES
-(1, 1, 'user1@email.com', 'Black Shirt', 7, 'Description 1', '2025-04-01', 'good', 'Medium', 24.99, 0, 1, NULL),
-(2, 1, 'user2@email.com', 'Nike Dunk High Shoes', 13, 'Description 2', '2025-04-02', 'excellent', 'X-Large', 129.99, 1, 0, '2025-05-02'),
-(3, 2, 'user3@email.com', 'Oxford Brogue Shoes', 2, 'Description 3', '2025-04-03', 'worn', 'Small', 174.99, 1, 0, '2025-05-26'),
-(4, 2, 'user4@email.com', 'Women’s Cargo Pants', 18, 'Description 4', '2025-04-04', 'good', 'Large', 54.99, 1, 0, '2025-05-26'),
-(5, 2, 'user5@email.com', 'Women’s Flower Dress', 0, 'Description 5', '2025-04-05', 'excellent', 'X-Small', 84.99, 0, 1, NULL),
-(6, 2, 'user6@email.com', 'White Shirt', 11, 'Description 6', '2025-04-05', 'good', 'Medium', 19.99, 0, 1, NULL),
-(7, 3, 'user7@email.com', 'Red Shirt', 5, 'Description 7', '2025-04-05', 'worn', 'XX-Small', 14.99, 1, 0, '2025-06-01'),
-(8, 3, 'user1@email.com', 'Button Up Shirt', 20, 'Description 8', '2025-04-01', 'good', 'X-Large', 34.99, 0, 1, NULL),
-(9, 3, 'user1@email.com', 'Retro Sneakers', 3, 'Description 9', '2025-04-02', 'excellent', 'Small', 89.99, 0, 1, NULL),
-(10, 4, 'user2@email.com', 'Women’s Leather Shoes', 9, 'Description 10', '2025-04-11', 'worn', 'Large', 69.99, 0, 1, NULL),
-(11, 4, 'user2@email.com', 'Puma x Lamelo Shoes', 1, 'Description 11', '2025-04-11', 'good', 'Medium', 109.99, 1, 0, '2025-05-28'),
-(12, 4, 'user3@email.com', 'Old Navy Zip Up Bomber Jacket', 16, 'Description 12', '2025-04-07', 'excellent', 'XX-Small', 149.99, 1, 0, '2025-05-28'),
-(13, 4, 'user3@email.com', 'Brown Work Pants', 8, 'Description 13', '2025-04-09', 'good', 'Small', 44.99, 0, 1, NULL),
-(14, 4, 'user4@email.com', 'Women’s Insulated Hoodie', 14, 'Description 14', '2025-04-11', 'worn', 'X-Small', 39.99, 0, 1, NULL),
-(15, 5, 'user5@email.com', 'Vintage Swing Party Dress', 6, 'Description 15', '2025-04-02', 'excellent', 'X-Large', 119.99, 1, 0, '2025-06-05');
 
+INSERT INTO Post(post_id, closet_id, owner_id, title, likes, description, date_posted, item_condition, size, price, bflag, sflag, rental_end_date) VALUES
+(1, 1, 'user1@email.com', 'Gildan DryBlend T-Shirt', 7, 'Made from 100% cotton, this short-sleeve black shirt features a stretchy, lightweight, and breathable fabric in a solid color design', '2025-04-01', 'good', 'Medium', 10.99, 0, 1, NULL),
+(2, 1, 'user2@email.com', 'Nike Dunk High Shoes', 13, 'Recalling the 1985 Be True to Your School Kentucky colorway, the Dunk High Kentucky released in June 2021. Built entirely with leather, the shoe’s upper appears in a mix of white and Game Royal, with perforations on the toe box providing breathability', '2025-04-02', 'excellent', 'X-Large', 79.99, 1, 0, '2025-05-02'),
+(3, 2, 'user3@email.com', 'Valiant - Oxford Brogue Shoes', 2, 'Valiant is a development on the long-standing Barker style Grant. Cut from high-quality unfinished crust leather, our collection of hand painted styles are individually painted with natural dyes to a rich and deep patina. Meaning each pair is unique in their shade and finish', '2025-04-03', 'worn', 'Small', 44.99, 1, 0, '2025-05-26'),
+(4, 2, 'user4@email.com', 'L.L. Bean Women’s Cargo Pants', 18, 'Inspired by the hardworking style of classic cargo pants, made from ultra durable stretch cotton that’s washed to feel like an old favorite. Designed to move easily throughout the day, in a flattering straight leg that looks great rolled up or down', '2025-04-04', 'good', 'Large', 24.99, 1, 0, '2025-05-26'),
+(5, 2, 'user5@email.com', 'Millia Hydrangea-Patterned Dress', 0, 'This charming midi dress features a delicate blue hydrangea pattern on sheer organza fabric, with a flowy silhouette perfect for garden parties or special occasions', '2025-04-05', 'excellent', 'X-Small', 74.99, 1, 0, NULL),
+(6, 2, 'user6@email.com', 'Fruit of the Loom Crew Neck T-Shirt', 11, 'This shirt features reinforced shoulder-to-shoulder tape, double-needle stitching on the neck, sleeves, and hem, plus a high-density fabric that makes prints look sharp and clear', '2025-04-05', 'good', 'Medium', 8.99, 0, 1, NULL),
+(7, 3, 'user7@email.com', 'Gildan Ultra Cotton T-Shirt', 5, 'This classic red tee is made from 100% cotton, giving it a soft and breathable feel. It’s got a simple, no-fuss design with short sleeves and a comfortable fit that works for everyday wear', '2025-04-05', 'worn', '4X-Large', 6.99, 1, 0, '2025-06-01'),
+(8, 3, 'user1@email.com', 'Paul Fredrick Slim Fit Button Up Shirt', 20, 'This shirt looks like a classic denim shirt but is made from soft, breathable TENCEL™, making it really comfortable to wear. It features a Kent collar and a chest pocket, giving it a timeless style that works well both for casual outings and more polished looks', '2025-04-01', 'good', '3X-Large', 18.99, 1, 0, NULL),
+(9, 3, 'user1@email.com', 'Origo Men’s Retro Sneakers', 3, 'The Retro Sneaker is a modern classic inspired by vintage styles, reimagined to fit barefoot principles.  Created with panels of certified natural leather and an amber sole for contrast', '2025-04-02', 'excellent', 'Small', 39.99, 0, 1, NULL),
+(10, 4, 'user2@email.com', 'Derimi’O Women’s Leather Sneakers', 9, 'Crafted from high-quality genuine leather, these women’s fashion sneakers offer exceptional durability and timeless style. Perfect for women seeking womens white sneakers that combine fashion and comfort for everyday wear', '2025-04-11', 'worn', 'Large', 23.99, 0, 1, NULL),
+(11, 4, 'user2@email.com', 'Puma x Lamelo Basketball Shoes', 1, 'Add dimension to your style and your game with LaMelo Ball’s latest signature shoe, the MB.04 Iridescent. Appearing in an attention-grabbing blue and purple colorway, the MB.04 is engulfed in alien tentacles with Melo phrases hidden in the design', '2025-04-11', 'good', 'Medium', 59.99, 1, 0, '2025-05-28'),
+(12, 4, 'user3@email.com', 'Old Navy Zip Up Bomber Jacket', 16, 'This lightweight water resistant bomber jacket has a soft woven shell and a smooth taffeta lining, making it comfortable and easy to wear. It features rib-knit collar, cuffs, and hem for a snug fit, plus handy welt pockets and an interior snap-welt pocket to keep your phone or wallet safe', '2025-04-07', 'excellent', 'XX-Small', 20.99, 1, 0, '2025-05-28'),
+(13, 4, 'user3@email.com', 'Truewerk Performance Work Pants', 8, 'Engineered for comfort and durability, the T1 WerkPant features lightweight, stretchy softshell fabric, articulated knees, and a variety of functional pockets. Designed for warm-weather work or outdoor activities, these pants offer excellent mobility, moisture-wicking performance, and a tailored fit that keeps you cool and comfortable all day long', '2025-04-09', 'good', 'Small', 44.99, 0, 1, NULL),
+(14, 4, 'user4@email.com', 'Trailmade Insulated Hoodie', 14, 'Built to get you out hiking even when the temp drops, the women’s REI Co-op Trailmade insulated hoodie has 80 g synthetic insulation for 3-season warmth—and it layers perfectly under your rain shell', '2025-04-11', 'worn', 'X-Small', 39.99, 0, 1, NULL),
+(15, 5, 'user5@email.com', '1950s Vintage Swing Party Dress', 6, 'This 50s classic dress is the perfect combination of style and comfort. Featuring a fitted wrap top with a keyhole round neckline, and a wide band waist that accentuates your figure, you’ll be turning heads at any party', '2025-04-02', 'good', 'X-Large', 18.99, 1, 0, '2025-06-05'),
+(16, 4, 'user4@email.com', 'Millia Mini Rose Dress', 14, 'Strapless misty rose mini dress designed to turn heads with a blend of flirty and dramatic energy. The bodice is expertly draped to flatter your figure, leading into a structured skirt that’s beautifully adorned with delicate rosettes', '2025-04-11', 'excellent', 'X-Small', 39.99, 1, 0, NULL),
+(17, 4, 'user7@email.com', 'Men’s Ring Glossy Dragon Pattern Glowing Ring', 14, 'This ring features a sleek, glossy finish adorned with a bold dragon pattern. Its glow-in-the-dark design adds a unique touch, making it stand out in low-light settings. Crafted from durable stainless steel, it’s both stylish and sturdy, suitable for various occasions', '2025-04-13', 'new', 'XX-Small', 6.99, 0, 1, NULL), 
+(18, 4, 'user1@email.com', 'Kids UPF 50+ Sun Hat', 14, 'This lightweight nylon sun hat offers UPF 50+ protection, shielding kids aged 2 to 10 from harmful UV rays. Designed with a wide brim and breathable mesh panels, it ensures comfort during outdoor play', '2025-04-19', 'good', 'X-Large', 11.99, 0, 1, NULL), 
+(19, 4, 'user2@email.com', 'Kids’ Twise Side-Kick 12" Dinosaur Backpack', 14, 'This backpack features a playful dinosaur design that’s sure to delight young adventurers. Its compact 12-inch size is perfect for preschoolers and kindergarteners, offering enough space for daily essentials without being bulky', '2025-04-19', 'new', 'Medium', 15.99, 0, 1, NULL), 
+(20, 4, 'user3@email.com', 'Women’s Squall Packable Rain Jacket', 14, 'Meet the Squall® raincoat with packable ease! Made with the same iconic sealed seams and waterproof finish, the wind and rain won’t stand a chance. An adjustable waist cinch not only adds a feminine flair, but it also gives you the option of a closer fit to keep the blustery wind out', '2025-03-29', 'worn', 'XX-Large', 54.99, 1, 0, NULL),
+(21, 4, 'user5@email.com', 'A&F Women’s High Rise Flare Pant', 14, 'High rise pants, that are fitted at the waist and hips, slightly relaxed at the thigh and eases at the knee into a full-length flare leg shape', '2025-03-29', 'worn', 'Large', 21.99, 1, 0, NULL),
+(22, 5, 'user6@email.com', 'Women’s Frame Shorts', 6, 'These white denim shorts have a relaxed fit with a mid-rise that sits comfortably high on the hips. They’ve got the classic five-pocket setup, belt loops, and a button-zip fly, so it is easy to throw on and pair with pretty much anything', '2025-02-23', 'good', 'X-Large', 12.99, 1, 0, '2025-06-05'),
+(23, 5, 'user7@email.com', 'Barbour x ERDEM Dhalia Waxed Jacket', 6, 'The Barbour x ERDEM Dhalia Waxed Jacket features the signature tailored silhouette ERDEM is renowned for, with its cinched peplum waist which gives an ultra-feminine look', '2025-02-23', 'excellent', 'X-Small', 24.99, 1, 0, '2025-06-05'),
+(24, 5, 'user4@email.com', 'Men’s Wide Basic Dress Belt', 6, 'Solid dress belt made from smooth Italian leather with a subtle shine and a clean buckle. Well-made and pairs easily with nice shoes', '2025-02-23', 'good', 'XX-Small', 15.99, 1, 0, '2025-06-05'),
+(25, 5, 'user6@email.com', 'Borelle Red Women’s Belt', 6, 'Stylish and versatile, this red belt is a must-have accessory to complete all your put-together looks with ease', '2025-02-23', 'new', 'Small', 7.99, 0, 1, '2025-06-05'),
+(26, 5, 'user7@email.com', 'Odisen Women’s Closed Toe Heels', 6, 'These pumps have a classic closed-toe design with a 3.5-inch heel, making them versatile for both office wear and formal occasions. The non-slip sole adds practicality, ensuring comfort and stability throughout the day', '2025-02-23', 'excellent', 'Large', 19.99, 0, 1, '2025-06-05');
 
 INSERT INTO Post_Image(image_id, post_id, image_url) VALUES
 (1, 1, 'https://img.sonofatailor.com/images/customizer/product/extra-heavy-cotton/ss/Black.jpg'),
@@ -255,7 +267,17 @@ INSERT INTO Post_Image(image_id, post_id, image_url) VALUES
 (12, 12, 'https://oldnavy.gap.com/webcontent/0050/522/919/cn50522919.jpg'),
 (13, 13, 'https://truewerk.com/cdn/shop/files/t1_werkpants_mens_olive_flat_lay_4825e693-f588-4813-bff0-1d4c46ce82ce.jpg?v=1713822726'),
 (14, 14, 'https://www.rei.com/media/113a2be2-cd71-4eaf-bf73-273475fbd681.jpg'),
-(15, 15, 'https://m.media-amazon.com/images/I/614gnlfQt2L._AC_SL1500_.jpg');
+(15, 15, 'https://m.media-amazon.com/images/I/614gnlfQt2L._AC_SL1500_.jpg'),
+(16, 16, 'https://itsmilla.com/cdn/shop/files/MILLA_153_b6d2885e-3c17-4f05-b7de-f2319fa0fd12_1024x.jpg?v=1731517611'),
+(17, 17, 'https://i5.walmartimages.com/asr/2186a74e-baaa-4dba-8170-fe1573859014.1624ac587e54e56821a9402c9d4ee46b.jpeg?odnHeight=612&odnWidth=612&odnBg=FFFFFF'),(18, 18, 'https://i5.walmartimages.com/seo/HEEHIPOO-Kids-Nylon-UPF-50-Sun-Hat-for-Toddlers-Boy-and-Girl-2-10-Years-Old_74e6f792-28a4-4ca4-a159-93495ef39564.cd7e713eab15eb638ad5cd59f9b3a724.jpeg?odnHeight=432&odnWidth=320&odnBg=FFFFFF'),
+(19, 19, 'https://target.scene7.com/is/image/Target/GUEST_dc397d6c-d0ce-42a8-a79f-f67b34cae008?wid=300&hei=300&fmt=pjpeg'),
+(20, 20, 'https://s7.landsend.com/is/image/LandsEnd/550298_LEPP_LF_88Y?$lg$'),
+(21, 21, 'https://img.abercrombie.com/is/image/anf/KIC_156-4370-0288-900_prod1.jpg?policy=product-large'),
+(22, 22, 'https://media.neimanmarcus.com/f_auto,q_auto:low,ar_4:5,c_fill,dpr_2.0,w_418/01/nm_4981084_100189_m'),
+(23, 23, 'https://www.barbour.com/media/catalog/product/cache/76b3137555865caacddfe4231ec61fb4/L/W/LWX1478OL99_CARRYFORWARDa_flat.jpg'),
+(24, 24, 'https://www.allenedmonds.com/blob/product-images/39099/ec/40/06789/ec4006789_single_feed1000.jpg'),
+(25, 25, 'https://media.aldoshoes.com/v3/product/borelle/600/borelle_red_600_main_sq_gy_1200x1200.jpg'),
+(26, 26, 'https://m.media-amazon.com/images/I/616KpV1v-0L._AC_UY900_.jpg');
 
 INSERT INTO Post_Category (post_id, category_id) VALUES
 (1, 2),
@@ -304,7 +326,41 @@ INSERT INTO Post_Category (post_id, category_id) VALUES
 (14, 14),
 (15, 1),
 (15, 7),
-(15, 13); 
+(16, 1),
+(16, 15),
+(17, 2),
+(17, 9),
+(17, 10),
+(17, 13),
+(18, 3),
+(18, 9),
+(18, 11),
+(18, 15),
+(19, 3),
+(19, 9),
+(19, 13),
+(19, 14),
+(20, 1),
+(20, 6),
+(20, 13),
+(21, 1),
+(21, 5),
+(21, 10),
+(22, 1),
+(22, 5),
+(22, 11),
+(23, 1),
+(23, 6),
+(23, 10),
+(24, 2),
+(24, 9),
+(24, 10),
+(25, 1),
+(25, 9),
+(25, 12),
+(26, 1),
+(26, 8),
+(26, 10);
 
 INSERT INTO Transactions (email, status, purchased_date) VALUES  
 ('user2@email.com', 'purchased', '2025-04-22 14:52:00'),  
