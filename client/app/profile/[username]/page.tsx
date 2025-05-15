@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useParams }   from 'next/navigation';
 import {
     Header,
@@ -21,29 +21,132 @@ const brandBrown = "#675a5e";
 
 // — Filter option arrays (copied from Explore)
 const typeOptions      = ['Tops','Bottoms','Outerwear','Dresses','Shoes','Accessories'] as const;
-const genderOptions    = ['Mens','Womens','Kids'] as const;
+const genderOptions    = ["Men's","Women's","Kids"] as const;
 const categoryOptions  = ['For Rent','For Sale'] as const;
 const conditionOptions = ['Brand new','Used – Like new','Used – Good','Used – Fair'] as const;
 const sizeOptions      = ['XX-Small','X-Small','Small','Medium','Large','X-Large','XX-Large','3X-Large','4X-Large'] as const;
 const colorOptions     = ['black','white','red','blue','green','pink'] as const;
 
 export default function ProfilePageByUsername() {
+    /* basic profile state */
+    const [firstName, setFirstName] = useState('');
+    const [lastName,  setLastName ] = useState('');
+    //const [email,     setEmail    ] = useState('');
+    const [bio,       setBio      ] = useState('');
+    const [items, setClosetItems] = useState<Product[]>([]);
+
     // 1) grab the URL segment
     const params        = useParams();
     const rawParam      = Array.isArray(params.username) ? params.username[0] : params.username || '';
-    const username      = decodeURIComponent(rawParam);
+    const email = decodeURIComponent(rawParam);
+    console.log("username " + email);
+
+    useEffect(() => {
+        console.log("raw param: " + rawParam);
+        console.log("email: " + email);
+        // Get specific user information from db - O.C.
+        fetch(`http://localhost:8800/api/profile?email=${email}`)
+        .then(response => response.json())
+        .then(data => {
+                console.log("returned: " + data.users[0]); // 1 user should be returned (1 account per email)
+                setFirstName(data.users[0].first_name);
+                setLastName(data.users[0].last_name);
+                setBio(data.users[0].bio);
+        })
+        .catch(error => console.error('Error:', error));
+    }, []);
 
     // 2) placeholder user info
     const userInfo = {
-        first_name:  'Jane',
-        last_name:   'Doe',
-        bio:         'Enthusiastic vintage clothing collector.',
+        first_name:  firstName,
+        last_name:   lastName,
+        bio:         bio,
         profile_url: 'https://static.vecteezy.com/system/resources/previews/009/960/522/non_2x/paper-shopping-bags-free-vector.jpg',
         rating:      4.5, // out of 5
-    };
+    };         
 
     // 3) placeholder listings — **exact** same sample data as Explore
-    const items: Product[] = PRODUCTS;
+    //const items: Product[] = PRODUCTS;
+    //setClosetItems(PRODUCTS);
+    /* fetch user’s closet */
+        useEffect(() => {
+            fetch(`http://localhost:8800/api/profile/posts?ownerID=${email}`)
+                .then((r) => r.json())
+                .then((data) => {
+                    console.log(data);
+                    const transformed: Product[] = data.posts.map((p: any) => ({
+                        id        : p.post_id,
+                        title     : p.title,
+                        price     : p.price ?? 20,
+                        forSale   : p.sflag === 1,
+                        forRent   : p.bflag === 1,
+                        sold      : p.sold ?? false,
+                        images    : p.images,
+                        type      : getUIType(p.categories),
+                        audience  : getUIAudience(p.categories),
+                        colors    : getUIColors(p.categories),
+                        sizes     : [p.size],
+                        condition : getUICondition(p.item_condition),
+                        description: p.description,
+                    }));
+                    
+                    setClosetItems(transformed.length ? [...transformed] : []);
+                })
+                .catch(console.error);
+        }, []);
+
+    // map UI labels to db values
+    const audienceMap = [
+        { label: "Women's", db_val: 1 },
+        { label: "Men's", db_val: 2 },
+        { label: "Kids", db_val: 3 }
+    ];
+
+    const typesMap = [
+        { label: "Tops", db_val: 4 },
+        { label: "Bottoms", db_val: 5 },
+        { label: "Outerwear", db_val: 6 },
+        { label: "Dresses", db_val: 7 },
+        { label: "Shoes", db_val: 8 },
+        { label: "Accessories", db_val: 9 }
+    ];
+
+    const colorsMap = [
+        { label: colorOptions[0], db_val: 10 },
+        { label: colorOptions[1], db_val: 11 },
+        { label: colorOptions[2], db_val: 12 },
+        { label: colorOptions[3], db_val: 13 },
+        { label: colorOptions[4], db_val: 14 },
+        { label: colorOptions[5], db_val: 15 }
+    ];
+
+    const dbConditionVals = [
+        { label: conditionOptions[0], db_val: "new"},
+        { label: conditionOptions[1], db_val: "excellent"},
+        { label: conditionOptions[2], db_val: "good"},
+        { label: conditionOptions[3], db_val: "worn"},
+    ];
+
+    // returns one string for type ("Women's", "Men's", or "Kids")
+    function getUIAudience(dbVals: any) {
+        return audienceMap.filter(item => dbVals.includes(item.db_val)).map(item => item.label);
+    }
+
+    // returns one string for type (Tops, Bottoms, Outerwear, ...)
+    function getUIType(dbVals: any) {
+        return typesMap.filter(item => dbVals.includes(item.db_val)).map(item => item.label);
+    }
+
+    // returns array of colors as strings
+    function getUIColors(dbVals: any) {
+        return colorsMap.filter(item => dbVals.includes(item.db_val)).map(item => item.label);
+    }
+
+    // returns one string for condition
+    function getUICondition(condition: string) {
+        var matchedCondition = dbConditionVals.find(item => item.db_val == condition);
+        return matchedCondition?.label;
+    }
 
     // 4) filter / sort / pagination state
     const [selTypes,    setTypes]    = useState<string[]>([]);
@@ -52,7 +155,7 @@ export default function ProfilePageByUsername() {
     const [selConds,    setConds]    = useState<string[]>([]);
     const [selSizes,    setSizes]    = useState<string[]>([]);
     const [selColors,   setColors]   = useState<string[]>([]);
-    const [priceRange,  setPriceRange] = useState<[number,number]>([0,500]);
+    const [priceRange,  setPriceRange] = useState<[number,number]>([0,50]);
     const [sort,        setSort]     = useState<'Most Popular'|'Price: Low to High'|'Price: High to Low'>('Most Popular');
     const [page,        setPage]     = useState(1);
     const perPage                     = 9;
@@ -63,29 +166,25 @@ export default function ProfilePageByUsername() {
     };
 
     // 5) apply filters + sort
-    const filtered = useMemo(() => {
-        return items
-            .filter(p => {
-                if (selTypes.length    && !selTypes.includes(p.type))      return false;
-                if (selGender.length   && !selGender.includes(p.audience)) return false;
-                if (selCats.length) {
-                    const rentMatch = selCats.includes('For Rent') && p.forRent;
-                    const saleMatch = selCats.includes('For Sale') && p.forSale;
-                    if (!rentMatch && !saleMatch) return false;
-                }
-                if (selConds.length    && !selConds.includes(p.condition))   return false;
-                if (selSizes.length    && !p.sizes.some(s=>selSizes.includes(s)))   return false;
-                if (selColors.length   && !p.colors.some(c=>selColors.includes(c))) return false;
-                if (p.price < priceRange[0] || p.price > priceRange[1])     return false;
-                return true;
-            })
-            .sort((a,b) => {
-                if (sort === 'Price: Low to High') return a.price - b.price;
-                if (sort === 'Price: High to Low') return b.price - a.price;
-                // Most Popular → newest first
-                return Number(b.id) - Number(a.id);
-            });
-    }, [items, selTypes, selGender, selCats, selConds, selSizes, selColors, priceRange, sort]);
+    const filtered = useMemo(()=> items.filter((p) => {
+            if (selTypes.length && (!p.type || !p.type.some((c) => selTypes.includes(c)))) return false;
+            if (selGender.length && (!p.audience || !p.audience.some((c) => selGender.includes(c)))) return false;
+    
+            if(selCats.length){
+                const rentMatch = selCats.includes('For Rent') && p.forRent;
+                const saleMatch = selCats.includes('For Sale') && p.forSale;
+                if(!rentMatch && !saleMatch) return false;
+            }
+            if (selConds.length && (!p.condition || !selConds.includes(p.condition))) return false;
+            if (selSizes.length && (!p.sizes || !p.sizes.some((s) => selSizes.includes(s)))) return false;
+            if (selColors.length && (!p.colors || !p.colors.some((c) => selColors.includes(c)))) return false;
+            if (p.price < priceRange[0] || p.price > priceRange[1]) return false;
+            return true;
+        }).sort((a, b) => {
+            if (sort === 'Price: Low to High') return a.price - b.price;
+            if (sort === 'Price: High to Low') return b.price - a.price;
+            return Number(b.id) - Number(a.id);
+        }),[selTypes,selGender,selCats,selConds,selSizes,selColors,sort,priceRange,items]);
 
     // 6) pagination
     const pages     = Math.ceil(filtered.length / perPage);
@@ -194,138 +293,92 @@ export default function ProfilePageByUsername() {
 
             {/* — Filters + Listings Grid (layout from Explore) */}
             <div className="container mx-auto py-6 px-4 flex-1 flex gap-6">
-                {/* Sidebar */}
-                <aside className="w-64 space-y-6 text-black sticky top-20">
-                    {/* Sort */}
+                {/* SIDEBAR */}
+                <aside className="w-64 space-y-6 text-black">
+                    {/* sort */}
                     <div>
                         <h3 className="font-semibold mb-2">Sort by</h3>
-                        <select
-                            value={sort}
-                            onChange={e => { setSort(e.target.value as any); setPage(1); }}
-                            className="w-full border p-2"
-                        >
-                            <option>Most Popular</option>
-                            <option>Price: Low to High</option>
-                            <option>Price: High to Low</option>
+                        <select value={sort} onChange={e=>{setSort(e.target.value as any);setPage(1);}}
+                                className="w-full border p-2 text-black">
+                            <option>Most Popular</option><option>Price: Low to High</option><option>Price: High to Low</option>
                         </select>
-                    </div>
-
-                    {/* Type */}
-                    <div>
-                        <h3 className="font-semibold mb-2">Type</h3>
-                        {typeOptions.map(opt=>(
-                            <label key={opt} className="block">
-                                <input
-                                    type="checkbox"
-                                    checked={selTypes.includes(opt)}
-                                    onChange={()=>toggle(opt,selTypes,setTypes)}
-                                    className="mr-2"
-                                />
-                                {opt}
-                            </label>
-                        ))}
                     </div>
 
                     {/* Audience */}
                     <div>
                         <h3 className="font-semibold mb-2">Audience</h3>
-                        {genderOptions.map(opt=>(
-                            <label key={opt} className="block">
-                                <input
-                                    type="checkbox"
-                                    checked={selGender.includes(opt)}
-                                    onChange={()=>toggle(opt,selGender,setGender)}
-                                    className="mr-2"
-                                />
-                                {opt}
+                        {genderOptions.map(g=>(
+                            <label key={g} className="flex items-center mb-1">
+                                <input type="checkbox" className="mr-2" checked={selGender.includes(g)}
+                                       onChange={()=>toggle(g,selGender,setGender)}/> {g}
                             </label>
                         ))}
                     </div>
 
-                    {/* Category */}
+                    {/* type */}
+                    <div>
+                        <h3 className="font-semibold mb-2">Type</h3>
+                        {typeOptions.map(t=>(
+                            <label key={t} className="flex items-center mb-1">
+                                <input type="checkbox" className="mr-2" checked={selTypes.includes(t)}
+                                       onChange={()=>toggle(t,selTypes,setTypes)}/> {t}
+                            </label>
+                        ))}
+                    </div>
+
+                    {/* category */}
                     <div>
                         <h3 className="font-semibold mb-2">Category</h3>
-                        {categoryOptions.map(opt=>(
-                            <label key={opt} className="block">
-                                <input
-                                    type="checkbox"
-                                    checked={selCats.includes(opt)}
-                                    onChange={()=>toggle(opt,selCats,setCats)}
-                                    className="mr-2"
-                                />
-                                {opt}
+                        {categoryOptions.map(c=>(
+                            <label key={c} className="flex items-center mb-1">
+                                <input type="checkbox" className="mr-2" checked={selCats.includes(c)}
+                                       onChange={()=>toggle(c,selCats,setCats)}/> {c}
                             </label>
                         ))}
                     </div>
 
-                    {/* Condition */}
+                    {/* price */}
                     <div>
-                        <h3 className="font-semibold mb-2">Condition</h3>
-                        {conditionOptions.map(opt=>(
-                            <label key={opt} className="block">
-                                <input
-                                    type="checkbox"
-                                    checked={selConds.includes(opt)}
-                                    onChange={()=>toggle(opt,selConds,setConds)}
-                                    className="mr-2"
-                                />
-                                {opt}
-                            </label>
-                        ))}
+                        <h3 className="font-semibold mb-2">Price ($)</h3>
+                        <div className="flex gap-2 items-center">
+                            <input type="number" value={priceRange[0]} onChange={e=>setPriceRange([+e.target.value,priceRange[1]])} className="border px-2 w-20"/>
+                            <span>-</span>
+                            <input type="number" value={priceRange[1]} onChange={e=>setPriceRange([priceRange[0],+e.target.value])} className="border px-2 w-20"/>
+                        </div>
                     </div>
 
-                    {/* Size */}
+                    {/* colours */}
+                    <div>
+                        <h3 className="font-semibold mb-2">Colors</h3>
+                        <div className="flex flex-wrap gap-2">
+                            {colorOptions.map(c=>(
+                                <button key={c} onClick={()=>toggle(c,selColors,setColors)}
+                                        className={`w-6 h-6 rounded-full border-2 ${selColors.includes(c)?'ring-2 ring-offset-1 ring-gray-600':''}`}
+                                        style={{ backgroundColor:c }} aria-label={c}/>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* size */}
                     <div>
                         <h3 className="font-semibold mb-2">Size</h3>
-                        {sizeOptions.map(opt=>(
-                            <label key={opt} className="block">
-                                <input
-                                    type="checkbox"
-                                    checked={selSizes.includes(opt)}
-                                    onChange={()=>toggle(opt,selSizes,setSizes)}
-                                    className="mr-2"
-                                />
-                                {opt}
-                            </label>
-                        ))}
-                    </div>
-
-                    {/* Color */}
-                    <div>
-                        <h3 className="font-semibold mb-2">Color</h3>
-                        {colorOptions.map(opt=>(
-                            <label key={opt} className="block">
-                                <input
-                                    type="checkbox"
-                                    checked={selColors.includes(opt)}
-                                    onChange={()=>toggle(opt,selColors,setColors)}
-                                    className="mr-2"
-                                />
-                                {opt}
-                            </label>
-                        ))}
-                    </div>
-
-                    {/* Price */}
-                    <div>
-                        <h3 className="font-semibold mb-2">Price</h3>
-                        <div className="flex items-center gap-2">
-                            <input
-                                type="number"
-                                value={priceRange[0]}
-                                onChange={e=>{ setPriceRange([+e.target.value, priceRange[1]]); setPage(1); }}
-                                className="w-1/2 border p-1"
-                                min={0}
-                            />
-                            <span>–</span>
-                            <input
-                                type="number"
-                                value={priceRange[1]}
-                                onChange={e=>{ setPriceRange([priceRange[0], +e.target.value]); setPage(1); }}
-                                className="w-1/2 border p-1"
-                                min={0}
-                            />
+                        <div className="flex flex-wrap gap-2">
+                            {sizeOptions.map(s=>(
+                                <button key={s} onClick={()=>toggle(s,selSizes,setSizes)}
+                                        className={`px-2 py-1 border text-xs ${selSizes.includes(s)?'bg-gray-200':''}`}>{s}</button>
+                            ))}
                         </div>
+                    </div>
+
+                    {/* condition */}
+                    <div>
+                        <h3 className="font-semibold mb-2">Condition</h3>
+                        {conditionOptions.map(c=>(
+                            <label key={c} className="flex items-center mb-1">
+                                <input type="checkbox" className="mr-2" checked={selConds.includes(c)}
+                                       onChange={()=>toggle(c,selConds,setConds)}/> {c}
+                            </label>
+                        ))}
                     </div>
                 </aside>
 
@@ -342,7 +395,9 @@ export default function ProfilePageByUsername() {
                                     username:  '',
                                 }
                             };
-                            return <ProductCard key={p.id} product={withoutUser} />;
+                            return <ProductCard key={p.id} product={withoutUser} setExplorePageItems={function (value: React.SetStateAction<Product[]>): void {
+                                throw new Error('Function not implemented.');
+                            } } />;
                         })}
                     </div>
 
