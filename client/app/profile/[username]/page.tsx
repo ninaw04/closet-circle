@@ -7,7 +7,6 @@ import {
     Footer,
     ProductCard,
     Product,
-    PRODUCTS,
 } from '../../explore/page';
 
 /* ============================================
@@ -34,6 +33,7 @@ export default function ProfilePageByUsername() {
     //const [email,     setEmail    ] = useState('');
     const [bio,       setBio      ] = useState('');
     const [items, setClosetItems] = useState<Product[]>([]);
+    const [unavailablePostIDs, setUnavailableArr] = useState<Number[]>([]);
 
     // 1) grab the URL segment
     const params        = useParams();
@@ -56,7 +56,7 @@ export default function ProfilePageByUsername() {
         .catch(error => console.error('Error:', error));
     }, []);
 
-    // 2) placeholder user info
+    // 2) User info
     const userInfo = {
         first_name:  firstName,
         last_name:   lastName,
@@ -65,9 +65,24 @@ export default function ProfilePageByUsername() {
         rating:      4.5, // out of 5
     };         
 
-    // 3) placeholder listings — **exact** same sample data as Explore
-    //const items: Product[] = PRODUCTS;
-    //setClosetItems(PRODUCTS);
+/* fetch unavailable items */
+    useEffect(() => {
+        fetch(`http://localhost:8800/api/profile/seller-history?email=${email}`)
+                .then((response) => response.json())
+                .then((data) => {
+                    console.log('Fetched sold posts: ', data);
+        
+                    if (!Array.isArray(data.orders)) {
+                        console.error("Invalid data format:", data);
+                        return;
+                    }
+
+                    // IDs of unavailable items (to be marked as sold)
+                    setUnavailableArr(data.orders.map((item: { post_id: any; }) => item.post_id));
+                })
+                .catch((error) => console.log('Error fetching ordered items: ', error));
+    }, []);
+
     /* fetch user’s closet */
         useEffect(() => {
             fetch(`http://localhost:8800/api/profile/posts?ownerID=${email}`)
@@ -80,7 +95,7 @@ export default function ProfilePageByUsername() {
                         price     : p.price ?? 20,
                         forSale   : p.sflag === 1,
                         forRent   : p.bflag === 1,
-                        sold      : p.sold ?? false,
+                        sold      : unavailablePostIDs.includes(p.post_id),
                         images    : p.images,
                         type      : getUIType(p.categories),
                         audience  : getUIAudience(p.categories),
@@ -93,7 +108,7 @@ export default function ProfilePageByUsername() {
                     setClosetItems(transformed.length ? [...transformed] : []);
                 })
                 .catch(console.error);
-        }, []);
+        }, [unavailablePostIDs]);
 
     // map UI labels to db values
     const audienceMap = [
