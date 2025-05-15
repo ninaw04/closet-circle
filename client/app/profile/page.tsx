@@ -39,25 +39,6 @@ interface Friend {
     profile_url : string | null;
 }
 
-/* ─── TEMP PLACEHOLDER ITEM (added to test UI!) ───────────────────────────────────────── */
-// const PLACEHOLDER: ClosetProduct = {
-//     id        : 10,
-//     title     : 'White Mini Dress',
-//     price     : 35,
-//     forSale   : true,
-//     forRent   : true,
-//     type      : 'Dresses',
-//     audience  : "Women's",
-//     colors    : ['white'],
-//     sizes     : ['Small'],
-//     condition : 'Brand new',
-//     description: 'Elegant white mini-dress, size S.',
-//     images    : [
-//         'https://encrypted-tbn3.gstatic.com/shopping?q=tbn:ANd9GcRG0fVSiGZw4HBqX7J0baOM1qogSWeeliHJt14VP-4t9xW9P5i6CaiYRdqZaensMNXdcrPl3kQdANfNQUEo7CMJbYOFUnYUTeR2-_A4-0eE_vy-3LcAf9aplg',
-//         'https://encrypted-tbn1.gstatic.com/shopping?q=tbn:ANd9GcRX1cmSzFeL_MKu1PAsa9sSKQ7I3uHU7kKss01bEG88ACaj_8k0aO4opTRdu7l8WVS-BCW2jzyGTpjOB9PrzIkRXzFJC-8Q3yboxOGE_OLs6stOZeNSpbDPew'
-//     ],
-// };
-
 /* ============================================
    HEADER
 ============================================ */
@@ -800,6 +781,7 @@ const ProfilePage: React.FC = () => {
     const [firstName, setFirstName] = useState('');
     const [lastName,  setLastName ] = useState('');
     const [email,     setEmail    ] = useState('');
+    const [bio,       setBio      ] = useState('');
 
     /* ui state */
     const [activeTab]       = useState('Profile');
@@ -815,6 +797,8 @@ const ProfilePage: React.FC = () => {
     /* closet data (start with placeholder) */
     const [closetItems, setClosetItems] = useState<ClosetProduct[]>([]);
     const [friends,   setFriends  ] = useState<Friend[]>([]);
+
+    const [unavailablePostIDs, setUnavailableArr] = useState<Number[]>([]);
 
     // Ensure user is logged in - O.C.
     if (!user) {
@@ -845,18 +829,36 @@ const ProfilePage: React.FC = () => {
                     console.log("returned: " + data.users[0]); // 1 user should be returned (1 account per email)
                     setFirstName(data.users[0].first_name);
                     setLastName(data.users[0].last_name);
+                    setBio(data.users[0].bio);
                 }
             })
             .catch(error => console.error('Error:', error));
          }
      }, [user, isLoading, router]);
 
+    /* fetch unavailable items */
+    useEffect(() => {
+        if (!user) return;
+        fetch(`http://localhost:8800/api/profile/seller-history?email=${user.email}`)
+                .then((response) => response.json())
+                .then((data) => {
+                    console.log('Fetched sold posts: ', data);
+        
+                    if (!Array.isArray(data.orders)) {
+                        console.error("Invalid data format:", data);
+                        return;
+                    }
+
+                    // IDs of unavailable items (to be marked as sold)
+                    setUnavailableArr(data.orders.map((item: { post_id: any; }) => item.post_id));
+                })
+                .catch((error) => console.log('Error fetching ordered items: ', error));
+    }, [user]);
 
     /* fetch user’s closet */
     useEffect(() => {
         if (!user) return;
         fetch(`http://localhost:8800/api/profile/posts?ownerID=${user.email}`)
-        // fetch(`http://localhost:8800/api/profile/posts?ownerID=user4@email.com`) // for testing purposes
             .then((r) => r.json())
             .then((data) => {
                 console.log(data);
@@ -866,7 +868,7 @@ const ProfilePage: React.FC = () => {
                     price     : p.price ?? 20,
                     forSale   : p.sflag === 1,
                     forRent   : p.bflag === 1,
-                    sold      : p.sold ?? false,
+                    sold      : unavailablePostIDs.includes(p.post_id),//p.sold ?? false,
                     images    : p.images,
                     type      : getUIType(p.categories),
                     audience  : getUIAudience(p.categories),
@@ -881,13 +883,12 @@ const ProfilePage: React.FC = () => {
                 );
             })
             .catch(console.error);
-    }, [user]);
+    }, [user, unavailablePostIDs]);
 
     /* fetch user friend list */
     useEffect(() => {
         if(!user) return;
         fetch(`http://localhost:8800/api/profile/friends?email=${user.email}`)
-        // fetch(`http://localhost:8800/api/profile/friends?email=user4@email.com`) // for testing purposes
             .then((r) => r.json())
             .then((data) => {
                 setFriends(data.friends);
@@ -1117,6 +1118,7 @@ const ProfilePage: React.FC = () => {
                                         <span className="ml-2">_ / 5</span>
                                     </div>
                                 </div>
+                                <p className="mt-2 text-gray-600">{bio}</p>
                             </div>
                         </div>
 
@@ -1226,12 +1228,12 @@ const ProfilePage: React.FC = () => {
                                     owner_id: user.email,
                                     title: p.title,
                                     likes: 0, // default value
-                                    item_pictures: p.images, // db currently stores only 1 image
+                                    item_pictures: p.images, 
                                     description: p.description,
                                     date_posted: getFormattedDate(),
                                     item_condition: getDBCondition(p.condition), // return either 'new', 'excellent', 'good', 'worn'
                                     categories: getDBCategories(p.type, p.audience, p.colors), // array of category_id
-                                    size: p.sizes? p.sizes[0] : p.sizes, // TODO update if changing to not an array
+                                    size: p.sizes? p.sizes[0] : p.sizes, 
                                     for_sale: p.forSale == true ? 1 : 0,
                                     for_rent: p.forRent == true ? 1 : 0,
                                     price: p.price,
