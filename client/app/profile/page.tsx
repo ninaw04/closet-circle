@@ -19,7 +19,7 @@ const brandBrown = "#675a5e";
 interface ClosetProduct {
     id         : number | string;
     title      : string;
-    price      : number;
+    price      : string; 
     forSale    : boolean;
     forRent    : boolean;
     sold?      : boolean;
@@ -510,7 +510,7 @@ type NewProduct = Omit<ClosetProduct, 'id'>;
 
 const emptyProduct: NewProduct = {
     title : '',
-    price : 0,
+    price : '', 
     forSale: true,
     forRent: false,
     type  : 'Tops',
@@ -541,7 +541,7 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({ open, onClose,
     const validate = (p: NewProduct) => {
         const e: Record<string,string> = {};
         if (!p.title.trim())   e.title    = 'Title is required';
-        if (p.price <= 0)      e.price    = 'Price must be greater than 0';
+        if (!p.price || Number(p.price) <= 0) e.price = 'Price must be greater than 0';
         if (!p.forSale && !p.forRent)     e.saleRent = 'Select at least one';
         if (p.colors == undefined || p.colors.length === 0)        e.colors   = 'Choose at least one colour';
         if (p.sizes == undefined || p.sizes.length  === 0)        e.sizes    = 'Choose at least one size';
@@ -586,10 +586,16 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({ open, onClose,
                         className={outline}
                         style={{ borderColor: errors.price ? 'red' : brandLightBrown }}
                         value={draft.price}
-                        onChange={e => update('price', Number(e.target.value))}
+                        onChange={e => {
+                            const val = e.target.value;
+                            // ensure only digits or empty strings and replace leading 0's
+                            if (/^\d*$/.test(val)) update('price', val.replace(/^0+(?=\d)/, '')); 
+                        }}
+                        placeholder="Enter price"
                     />
                     {errors.price && <p className="text-sm text-red-600">{errors.price}</p>}
                 </label>
+
 
                 {/* ---------- SALE / RENT ---------- */}
                 <div className="flex gap-20">
@@ -760,6 +766,7 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({ open, onClose,
                         className="px-4 py-2 rounded text-white"
                         style={{ backgroundColor: brandBrown }}
                     >
+                        
                         Save
                     </button>
                 </div>
@@ -1236,7 +1243,7 @@ const ProfilePage: React.FC = () => {
                                     size: p.sizes? p.sizes[0] : p.sizes, 
                                     for_sale: p.forSale == true ? 1 : 0,
                                     for_rent: p.forRent == true ? 1 : 0,
-                                    price: p.price,
+                                    price: Number(p.price),
                                     rental_date: ""
                                 };
 
