@@ -231,7 +231,7 @@ const TabButton = ({
 /* ============================================
    CLOSET CARD
 ============================================ */
-const ClosetCard: React.FC<{ product: ClosetProduct }> = ({ product }) => {
+const ClosetCard: React.FC<{ product: ClosetProduct; onDelete: (id: number | string) => void }> = ({ product, onDelete }) => {
     const [idx, setIdx]   = useState(0);
     const [open, setOpen] = useState(false);
     const ref = useRef<HTMLDivElement | null>(null);
@@ -253,6 +253,28 @@ const ClosetCard: React.FC<{ product: ClosetProduct }> = ({ product }) => {
 
     return (
         <div ref={ref} className="relative bg-gray-100 rounded-lg border overflow-visible">
+            {/* Delete Button */}
+            <button
+                onClick={() => onDelete(product.id)}
+                className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 shadow-md z-50"
+                aria-label="Delete Item"
+            >
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth="1.5"
+                    stroke="currentColor"
+                    className="w-4 h-4"
+                >
+                    <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M6 18L18 6M6 6l12 12"
+                    />
+                </svg>
+            </button>
+
             {/* image / carousel */}
             {imgCount ? (
                 <div className="relative">
@@ -781,6 +803,8 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({ open, onClose,
 ============================================ */
 const ProfilePage: React.FC = () => {
     const [showAddModal, setShowAddModal] = useState(false);
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [itemToDelete, setItemToDelete] = useState<number | string | null>(null);
     const { user, isLoading } = useUser();
     const router               = useRouter();
 
@@ -806,6 +830,41 @@ const ProfilePage: React.FC = () => {
     const [friends,   setFriends  ] = useState<Friend[]>([]);
 
     const [unavailablePostIDs, setUnavailableArr] = useState<Number[]>([]);
+
+    // reusable confirmation model
+    const ConfirmationModal: React.FC<{
+        open: boolean;
+        onClose: () => void;
+        onConfirm: () => void;
+        message: string;
+    }> = ({ open, onClose, onConfirm, message }) => {
+        if (!open) return null;
+    
+        return createPortal(
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+                <div className="bg-white w-full max-w-md rounded-lg shadow-lg p-6 space-y-4">
+                    <p className="text-lg text-gray-800">{message}</p>
+                    <div className="flex justify-end gap-4">
+                        <button
+                            onClick={onClose}
+                            className="px-4 py-2 rounded border"
+                            style={{ color: brandBrown, borderColor: brandBrown }}
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            onClick={onConfirm}
+                            className="px-4 py-2 rounded text-white"
+                            style={{ backgroundColor: brandBrown }}
+                        >
+                            Confirm
+                        </button>
+                    </div>
+                </div>
+            </div>,
+            document.body
+        );
+    };
 
     // Ensure user is logged in - O.C.
     if (!user) {
@@ -1188,15 +1247,16 @@ const ProfilePage: React.FC = () => {
                         {activeProfileTab === 'My Closet' && (
                             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
                                 {filtered.map((p) => (
-                                    <ClosetCard key={p.id} product={p} />
+                                    <ClosetCard
+                                        key={p.id}
+                                        product={p}
+                                        onDelete={(id) => {
+                                            setItemToDelete(id);
+                                            setShowDeleteModal(true);
+                                        }}
+                                    />
                                 ))}
 
-                                {/* “add item” square */}
-                                {/*
-                                <div
-                                    className="bg-gray-100 rounded-lg aspect-square flex items-center justify-center cursor-pointer"
-                                    onClick={() => {router.push('/profile/upload-item')}}
-                                > */}
                                 <div
                                     className="bg-gray-100 rounded-lg aspect-square flex items-center justify-center cursor-pointer"
                                     onClick={() => setShowAddModal(true)}
@@ -1261,6 +1321,34 @@ const ProfilePage: React.FC = () => {
                                 ]);
                                 setShowAddModal(false);
                             }}
+                        />
+
+                        <ConfirmationModal
+                            open={showDeleteModal}
+                            onClose={() => setShowDeleteModal(false)}
+                            onConfirm={() => {
+                                if (itemToDelete !== null) {
+                                    // Send delete request to the backend
+                                    fetch('http://localhost:8800/api/profile/delete-item', {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({ post_id: itemToDelete }),
+                                    })
+                                        .then((response) => {
+                                            if (!response.ok) {
+                                                throw new Error('Failed to delete item');
+                                            }
+                                            // Update the frontend state
+                                            setClosetItems((prevItems) => prevItems.filter((item) => item.id !== itemToDelete));
+                                        })
+                                        .catch((error) => console.error('Error deleting item:', error))
+                                        .finally(() => {
+                                            setShowDeleteModal(false); // Close the modal
+                                            setItemToDelete(null); // Reset the item to delete
+                                        });
+                                }
+                            }}
+                            message="Are you sure you want to delete this item?"
                         />
 
                         {/* Friends list */}

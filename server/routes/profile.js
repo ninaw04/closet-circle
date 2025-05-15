@@ -303,6 +303,42 @@ module.exports = (db) => {
 
     })
 
+    router.post("/delete-item", (req, res) => {
+        const { post_id } = req.body;
+        const deletePostImages = `DELETE FROM Post_Image WHERE post_id = ?`;
+        const deletePostCategories = `DELETE FROM Post_Category WHERE post_id = ?`;
+        const deletePost = `DELETE FROM Post WHERE post_id = ?`;
+    
+        // Start by deleting related data
+        db.run(deletePostImages, [post_id], function (err) {
+            if (err) {
+                console.error("Error deleting post images:", err.message);
+                res.status(500).json({ error: "Failed to delete post images" });
+                return;
+            }
+    
+            db.run(deletePostCategories, [post_id], function (err) {
+                if (err) {
+                    console.error("Error deleting post categories:", err.message);
+                    res.status(500).json({ error: "Failed to delete post categories" });
+                    return;
+                }
+    
+                // Finally, delete the post itself
+                db.run(deletePost, [post_id], function (err) {
+                    if (err) {
+                        console.error("Error deleting post:", err.message);
+                        res.status(500).json({ error: "Failed to delete post" });
+                        return;
+                    }
+    
+                    res.json({ success: true, message: "Item deleted successfully" });
+                });
+            });
+        });
+
+    }) 
+
     // get purchased transactions for a user
     router.get("/order-history/purchased", (req, res) => {
         const { email } = req.query;
