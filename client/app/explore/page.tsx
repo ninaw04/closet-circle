@@ -527,7 +527,7 @@ const ExplorePage: React.FC = () => {
     const [selSizes,  setSizes]  = useState<string[]>([]);
     const [selColors, setColors] = useState<string[]>([]);
     const [selGender, setGender] = useState<string[]>([]);
-    const [priceInput, setPrice] = useState<[string, string]>(['0','50']);
+    const [priceInput, setPrice] = useState<[string, string]>(['0','80']);
     const [sort,      setSort]   = useState('Most Popular');
     const [page,      setPage]   = useState(1);
     const perPage = 9;
