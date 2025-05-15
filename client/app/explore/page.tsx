@@ -33,6 +33,7 @@ interface Product {
     price     : number;
     forSale   : boolean;
     forRent   : boolean;
+    sold?      : boolean;
     type      : string[]; //'Tops'|'Bottoms'|'Outerwear'|'Dresses'|'Shoes'|'Accessories';
     audience  : string[]; //"Men's" |"Women's"|"Kids";
     colors    : string[];
@@ -319,7 +320,7 @@ const ProductCard: React.FC<ProductCardProps> = ({product, initialFav = false, s
     const imgCount  = imgs.length;
     const nextImg   = () => setI((i+1)%imgCount);
     const prevImg   = () => setI((i-1+imgCount)%imgCount);
-    const unavailable = !product.forSale && !product.forRent;
+    const unavailable = (!product.forSale && !product.forRent) || product.sold;
 
     return (
         <div ref={ref} className="relative bg-gray-100 rounded-lg border overflow-visible">
@@ -589,6 +590,8 @@ const ExplorePage: React.FC = () => {
     const [sort,      setSort]   = useState('Most Popular');
     const [page,      setPage]   = useState(1);
     const perPage = 9;
+    const [unavailablePostIDs, setUnavailableArr] = useState<Number[]>([]);
+
     // convert strings to numbers so can be used for filtering
     const price = [priceInput[0] === '' ? 0 : Number(priceInput[0]), priceInput[1] === '' ? 0 : Number(priceInput[1]),];
 
@@ -610,6 +613,27 @@ const ExplorePage: React.FC = () => {
             });
     }, [user]);
 
+    /* fetch unavailable items */
+    useEffect(() => {
+        console.log("in use effect for sold posts")
+        fetch(`http://localhost:8800/api/all-unavailable`)
+                .then((response) => response.json())
+                .then((data) => {
+                    console.log('Fetched sold posts: ', data);
+           
+                    if (!Array.isArray(data.orders)) {
+                        console.error("Invalid data format:", data);
+                        return;
+                    }
+   
+                    // IDs of unavailable items (to be marked as sold)
+                    setUnavailableArr(data.orders.map((item: { post_id: any; }) => item.post_id));
+                    console.log("unavailable post ids first: " + unavailablePostIDs);
+                })
+                .catch((error) => console.log('Error fetching ordered items: ', error));
+    }, []);
+
+
     // Fetch products from backend
     useEffect(() => {
         console.log("in use effect")
@@ -620,6 +644,7 @@ const ExplorePage: React.FC = () => {
             })
             .then((data) => {
                 console.log('Fetched posts: ', data);
+                console.log("unavailable post ids: " + unavailablePostIDs);
 
                 if (!data.posts || !Array.isArray(data.posts)) {
                     console.error("Invalid data format:", data);
@@ -627,13 +652,14 @@ const ExplorePage: React.FC = () => {
                     return;
                 }
 
+
                 const transformed: Product[] = data.posts.map((post: any) => ({
                     id: post.post_id,
                     title: post.title,
                     price: post.price ?? 20, // Default price if not provided
                     forSale: post.sflag === 1,
                     forRent: post.bflag === 1,
-                    sold: post.sold ?? false,
+                    sold: unavailablePostIDs.includes(post.post_id), //post.sold ?? false,
                     type: getUIType(post.categories), //post.type ?? '',
                     audience: getUIAudience(post.categories), //post.audience ?? '',
                     colors: getUIColors(post.categories), //post.colors ?? [],
@@ -648,6 +674,7 @@ const ExplorePage: React.FC = () => {
                     },
                 }));
 
+
                 console.log("transformed items: ", transformed);
                 // setExplorePageItems(transformed);
                 setExplorePageItems((prevItems) => {
@@ -661,7 +688,7 @@ const ExplorePage: React.FC = () => {
                 })
             })
             .catch((error) => console.log('Error fetching explore page items: ', error));
-    }, []);
+    }, [unavailablePostIDs]);
 
     /* filter logic */
     const filtered = useMemo(()=> explorePageItems.filter((p) => {
