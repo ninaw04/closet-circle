@@ -175,11 +175,7 @@ INSERT INTO User(email, first_name, last_name, join_date, bio) VALUES
 ('user4@email.com', 'Sally', 'Lopez', '2025-04-04', 'Bio for user 4'),
 ('user5@email.com', 'Joe', 'Gonzalez', '2025-04-05', 'Bio for user 5'),
 ('user6@email.com', 'Richard', 'Miller', '2025-04-06', 'Bio for user 6'),
-('user7@email.com', 'Robert', 'Tan', '2025-04-07', 'Bio for user 7'),
-('leexiaoqi2841@gmail.com', 'Xiao Qi', 'Lee', '2025-04-07', 'Bio for user 8'),
-('flowerjoy27@gmail.com', 'Flower', 'Joy', '2025-04-07', 'Bio for user 9'), 
-('nina.wang@sjsu.edu', 'Nina', 'Wang', '2025-04-07', 'Bio for user 10'), 
-('sanjana.n438@gmail.com', 'Sanjana', '<3', '2025-04-07', 'Bio for user 11');
+('user7@email.com', 'Robert', 'Tan', '2025-04-07', 'Bio for user 7');
 
 INSERT INTO Closet(closet_id, name, public, description) VALUES
 (1, 'Closet 1', 1, 'public closet 1'),
